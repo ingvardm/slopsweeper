@@ -144,10 +144,10 @@ function chordCell(r, c) {
 
 function updateStatusEmoji(state) {
   const $status = document.getElementById('status-emoji');
-  if (state === 'won') $status.textContent = '😎'; // cool sunglasses
-  else if (state === 'lost') $status.textContent = '💀'; // dead
-  else if (state === 'key') $status.textContent = '😲'; // shocked for key/button down
-  else $status.textContent = '😊'; // default smiling
+if (state === 'won') $status.textContent = '😎'; // Victory / Won
+   else if (state === 'lost') $status.textContent = '😵'; // Game Over / Lost
+   else if (state === 'key') $status.textContent = '😮'; // Clicking / Suspense
+   else $status.textContent = '🙂'; // Normal / Playing
 }
 
 // Replace timer update to include clock emoji and no label
@@ -223,8 +223,8 @@ function onCellClick(e) {
     startTimer();
     firstClick = false;
   }
-  // Update status emoji for key/button down (mouse click)
-  updateStatusEmoji('key');
+    // Update status emoji for key/button down (mouse click) – handled via mousedown/mouseup events
+    // (Removed per-click status updates)
   if (cell.revealed && cell.adjacent > 0) {
     chordCell(r, c);
   } else {
@@ -253,8 +253,8 @@ function onCellRightClick(e) {
     flagsLeft++;
   }
   setMinesLeft(flagsLeft);
-  // Update status emoji for key/button down (right click)
-  updateStatusEmoji('key');
+  // Update status emoji for key/button down (right click) – removed per-click update
+
 }
 
 function onCellDoubleClick(e) {
@@ -332,7 +332,12 @@ function loadScores() {
         const li = document.createElement('li');
         li.textContent = `${s.playerInitials} – ${s.timeInSeconds}s`;
         $scoresList.appendChild(li);
-      });
+});
+// Hold listeners for suspense emoji (mouse button or 'x' key)
+document.addEventListener('mousedown', e => { if (e.button === 0 && !gameEnded) updateStatusEmoji('key'); });
+document.addEventListener('mouseup', e => { if (e.button === 0 && !gameEnded) updateStatusEmoji('default'); });
+document.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'x' && !gameEnded) updateStatusEmoji('key'); });
+document.addEventListener('keyup', e => { if (e.key.toLowerCase() === 'x' && !gameEnded) updateStatusEmoji('default'); });
     })
     .catch(() => {});
 }
