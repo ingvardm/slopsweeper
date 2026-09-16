@@ -1,0 +1,76 @@
+/* Grape theme — neon-purple dark theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="grape"] {
+  /* ---- colors (neon purple) ---- */
+  --desktop-bg: #120826;
+  --win-face: #33244d;
+  --win-highlight: #5d4a80;
+  --win-light: #463665;
+  --win-shadow: #191028;
+  --win-dark: #000000;
+  --title-gradient-a: #2a0f5c;
+  --title-gradient-b: #7b2ff7;
+  --title-text: #f2e9ff;
+  --cell-face: #3b2c58;
+  --cell-revealed: #241a38;
+  --counter-bg: #0d0618;
+  --counter-fg: #ff4fd8;
+  --text-color: #d9c8f5;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #d9c8f5;
+  --button-text: #d9c8f5;
+  --popup-text: #d9c8f5;
+  --modal-text: #d9c8f5;
+  --muted-text: #9a86bd;
+  --inset-bg: #1a1029;
+  --inset-text: #d9c8f5;
+  --cell-bevel-extra: #191028;
+  --check-color: #6fd66f;
+  --flag-color: #ff5e7a;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #7db8ff;
+  --num-2: #6fd66f;
+  --num-3: #ff6b7a;
+  --num-4: #b79aff;
+  --num-5: #ff9a5e;
+  --num-6: #5ed6d6;
+  --num-7: #cfc3e8;
+  --num-8: #8a86a0;
+  --num-default: #cfc3e8;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (classic-dark set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "🧨";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

@@ -1,119 +1,1114 @@
-/* Basic styling and theme variables */
-:root {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-  --grid-bg: #dddddd;
-  --cell-size: 30px;
-  --border-color: #777777;
+/* Windows 98 Minesweeper theme */
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("fonts/PressStart2P/PressStart2P-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-.dark-theme {
-  --bg-color: #1e1e1e;
-  --text-color: #e0e0e0;
-  --grid-bg: #2b2b2b;
-  --border-color: #aaaaaa;
+/* Self-hosted Noto Color Emoji (COLRv1 woff2 subsets, same unicode-range
+   split as Google Fonts, so browsers only fetch the subsets they need).
+   First in the --font-emoji stack defined by each theme; system emoji fonts
+   stay as fallbacks (e.g. for U+2713, which Noto Emoji lacks). */
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-0.woff2") format("woff2");
+  unicode-range: U+1f1e6-1f1ff;
 }
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-1.woff2") format("woff2");
+  unicode-range: U+200d, U+2620, U+26a7, U+fe0f, U+1f308, U+1f38c, U+1f3c1, U+1f3f3-1f3f4, U+1f6a9, U+e0062-e0063, U+e0065, U+e0067, U+e006c, U+e006e, U+e0073-e0074, U+e0077, U+e007f;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-2.woff2") format("woff2");
+  unicode-range: U+23, U+2a, U+30-39, U+a9, U+ae, U+200d, U+203c, U+2049, U+20e3, U+2122, U+2139, U+2194-2199, U+21a9-21aa, U+23cf, U+23e9-23ef, U+23f8-23fa, U+24c2, U+25aa-25ab, U+25b6, U+25c0, U+25fb-25fe, U+2611, U+2622-2623, U+2626, U+262a, U+262e-262f, U+2638, U+2640, U+2642, U+2648-2653, U+2660, U+2663, U+2665-2666, U+2668, U+267b, U+267e-267f, U+2695, U+269b-269c, U+26a0, U+26a7, U+26aa-26ab, U+26ce, U+26d4, U+2705, U+2714, U+2716, U+271d, U+2721, U+2733-2734, U+2747, U+274c, U+274e, U+2753-2755, U+2757, U+2764, U+2795-2797, U+27a1, U+27b0, U+27bf, U+2934-2935, U+2b05-2b07, U+2b1b-2b1c, U+2b55, U+3030, U+303d, U+3297, U+3299, U+fe0f, U+1f170-1f171, U+1f17e-1f17f, U+1f18e, U+1f191-1f19a, U+1f201-1f202, U+1f21a, U+1f22f, U+1f232-1f23a, U+1f250-1f251, U+1f310, U+1f3a6, U+1f3b5-1f3b6, U+1f3bc, U+1f3e7, U+1f441, U+1f499-1f49c, U+1f49f-1f4a0, U+1f4ac-1f4ad, U+1f4b1-1f4b2, U+1f4b9, U+1f4db, U+1f4f2-1f4f6, U+1f500-1f507, U+1f515, U+1f518-1f524, U+1f52f-1f53d, U+1f549, U+1f54e, U+1f5a4, U+1f5e8, U+1f5ef, U+1f6ab, U+1f6ad-1f6b1, U+1f6b3, U+1f6b7-1f6bc, U+1f6be, U+1f6c2-1f6c5, U+1f6d0-1f6d1, U+1f6d7, U+1f6dc, U+1f7e0-1f7eb, U+1f7f0, U+1f90d-1f90e, U+1f9d1-1f9d2, U+1f9e1, U+1fa75-1fa77, U+1faaf;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-3.woff2") format("woff2");
+  unicode-range: U+200d, U+231a-231b, U+2328, U+23f0-23f3, U+2602, U+260e, U+2692, U+2694, U+2696-2697, U+2699, U+26b0-26b1, U+26cf, U+26d1, U+26d3, U+2702, U+2709, U+270f, U+2712, U+fe0f, U+1f302, U+1f321, U+1f392-1f393, U+1f3a9, U+1f3bd, U+1f3ee, U+1f3f7, U+1f3fa, U+1f451-1f462, U+1f484, U+1f489-1f48a, U+1f48c-1f48e, U+1f4a1, U+1f4a3, U+1f4a5, U+1f4b0, U+1f4b3-1f4b8, U+1f4bb-1f4da, U+1f4dc-1f4f1, U+1f4ff, U+1f508-1f514, U+1f516-1f517, U+1f526-1f529, U+1f52c-1f52e, U+1f550-1f567, U+1f56f-1f570, U+1f576, U+1f587, U+1f58a-1f58d, U+1f5a5, U+1f5a8, U+1f5b1-1f5b2, U+1f5c2-1f5c4, U+1f5d1-1f5d3, U+1f5dc-1f5de, U+1f5e1, U+1f5f3, U+1f6aa, U+1f6ac, U+1f6bd, U+1f6bf, U+1f6c1, U+1f6cb, U+1f6cd-1f6cf, U+1f6d2, U+1f6e0-1f6e1, U+1f6f0, U+1f97b-1f97f, U+1f9af, U+1f9ba, U+1f9e2-1f9e6, U+1f9ea-1f9ec, U+1f9ee-1f9f4, U+1f9f7-1f9ff, U+1fa71-1fa74, U+1fa79-1fa7b, U+1fa86, U+1fa8e-1fa8f, U+1fa91-1fa93, U+1fa96, U+1fa99-1faa0, U+1faa2-1faa7, U+1faaa-1faae;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-4.woff2") format("woff2");
+  unicode-range: U+265f, U+26bd-26be, U+26f3, U+26f8, U+fe0f, U+1f004, U+1f0cf, U+1f380-1f384, U+1f386-1f38b, U+1f38d-1f391, U+1f396-1f397, U+1f399-1f39b, U+1f39e-1f39f, U+1f3a3-1f3a5, U+1f3a7-1f3a9, U+1f3ab-1f3b4, U+1f3b7-1f3bb, U+1f3bd-1f3c0, U+1f3c5-1f3c6, U+1f3c8-1f3c9, U+1f3cf-1f3d3, U+1f3f8-1f3f9, U+1f47e, U+1f4e2, U+1f4f7-1f4fd, U+1f52b, U+1f579, U+1f58c-1f58d, U+1f5bc, U+1f6f7, U+1f6f9, U+1f6fc, U+1f93f, U+1f941, U+1f945, U+1f947-1f94f, U+1f9e7-1f9e9, U+1f9f5-1f9f6, U+1fa70-1fa71, U+1fa80-1fa81, U+1fa83-1fa85, U+1fa87-1fa8a, U+1fa94-1fa95, U+1fa97-1fa98, U+1faa1, U+1faa9, U+1fadf;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-5.woff2") format("woff2");
+  unicode-range: U+2693, U+26e9-26ea, U+26f1-26f2, U+26f4-26f5, U+26fa, U+26fd, U+2708, U+fe0f, U+1f301, U+1f303, U+1f306-1f307, U+1f309, U+1f310, U+1f3a0-1f3a2, U+1f3aa, U+1f3cd-1f3ce, U+1f3d5, U+1f3d7-1f3db, U+1f3df-1f3e6, U+1f3e8-1f3ed, U+1f3ef-1f3f0, U+1f488, U+1f492, U+1f4ba, U+1f54b-1f54d, U+1f5fa-1f5ff, U+1f680-1f6a2, U+1f6a4-1f6a8, U+1f6b2, U+1f6d1, U+1f6d5-1f6d6, U+1f6dd-1f6df, U+1f6e2-1f6e5, U+1f6e9, U+1f6eb-1f6ec, U+1f6f3-1f6f6, U+1f6f8, U+1f6fa-1f6fb, U+1f9bc-1f9bd, U+1f9ed, U+1f9f3, U+1fa7c;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-6.woff2") format("woff2");
+  unicode-range: U+200d, U+2615, U+fe0f, U+1f32d-1f330, U+1f336, U+1f33d, U+1f344-1f37f, U+1f382, U+1f52a, U+1f7e9, U+1f7eb, U+1f942-1f944, U+1f950-1f96f, U+1f99e, U+1f9aa, U+1f9c0-1f9cb, U+1fad0-1fadc;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-7.woff2") format("woff2");
+  unicode-range: U+200d, U+2600-2601, U+2603-2604, U+2614, U+2618, U+26a1, U+26c4-26c5, U+26c8, U+26f0, U+2728, U+2744, U+2b1b, U+2b50, U+fe0f, U+1f300, U+1f304-1f305, U+1f308, U+1f30a-1f30f, U+1f311-1f321, U+1f324-1f32c, U+1f331-1f335, U+1f337-1f33c, U+1f33e-1f344, U+1f3d4, U+1f3d6, U+1f3dc-1f3de, U+1f3f5, U+1f400-1f43f, U+1f490, U+1f4a7, U+1f4ae, U+1f525, U+1f54a, U+1f573, U+1f577-1f578, U+1f648-1f64a, U+1f6d8, U+1f940, U+1f980-1f9ae, U+1f9ba, U+1fa90, U+1faa8, U+1fab0-1fabf, U+1facd-1facf, U+1fae7;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-8.woff2") format("woff2");
+  unicode-range: U+200d, U+2640, U+2642, U+2695-2696, U+26f7, U+26f9, U+2708, U+2764, U+27a1, U+fe0f, U+1f33e, U+1f373, U+1f37c, U+1f384-1f385, U+1f393, U+1f3a4, U+1f3a8, U+1f3c2-1f3c4, U+1f3c7, U+1f3ca-1f3cc, U+1f3eb, U+1f3ed, U+1f3fb-1f3ff, U+1f430, U+1f466-1f469, U+1f46b-1f478, U+1f47c, U+1f481-1f483, U+1f486-1f487, U+1f48b, U+1f48f, U+1f491, U+1f4bb-1f4bc, U+1f527, U+1f52c, U+1f574-1f575, U+1f57a, U+1f645-1f647, U+1f64b, U+1f64d-1f64e, U+1f680, U+1f692, U+1f6a3, U+1f6b4-1f6b6, U+1f6c0, U+1f6cc, U+1f91d, U+1f926, U+1f930-1f931, U+1f934-1f93a, U+1f93c-1f93e, U+1f977, U+1f9af-1f9b3, U+1f9b8-1f9b9, U+1f9bc-1f9bd, U+1f9cc-1f9cf, U+1f9d1-1f9df, U+1fa70, U+1fa82, U+1fac3-1fac5, U+1fac8, U+1faef;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-9.woff2") format("woff2");
+  unicode-range: U+200d, U+2194-2195, U+2603, U+261d, U+2620, U+2639-263a, U+2665, U+26a1, U+26c4, U+270a-270d, U+2728, U+2763-2764, U+2b50, U+fe0f, U+1f31a-1f31f, U+1f32b, U+1f389-1f38a, U+1f3fb-1f3ff, U+1f440-1f450, U+1f463-1f465, U+1f479-1f47b, U+1f47d-1f480, U+1f485, U+1f48b-1f48c, U+1f493-1f49f, U+1f4a2, U+1f4a4-1f4a6, U+1f4a8-1f4ab, U+1f4af, U+1f525, U+1f573, U+1f590, U+1f595-1f596, U+1f5a4, U+1f5e3, U+1f600-1f644, U+1f648-1f64a, U+1f64c, U+1f64f, U+1f90c-1f925, U+1f927-1f92f, U+1f932-1f933, U+1f970-1f976, U+1f978-1f97a, U+1f9a0, U+1f9b4-1f9b7, U+1f9bb, U+1f9be-1f9bf, U+1f9d0, U+1f9e0-1f9e1, U+1fa75-1fa79, U+1fac0-1fac2, U+1fac6, U+1fae0-1fae6, U+1fae8-1faea, U+1faef-1fafa;
+}
+@font-face {
+  font-family: "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/NotoColorEmoji/NotoColorEmoji-subset-10.woff2") format("woff2");
+  unicode-range: U+1f6d9, U+1fa8b-1fa8d, U+1facc, U+1fadd, U+1faeb;
+}
+
+/* Theme engine (pure CSS): colors, fonts and glyphs come from
+   public/themes/classic-light.css and classic-dark.css via
+   `:root[data-theme="..."]` variables. This file only consumes variables
+   and maps data-icon / data-face / data-glyph / data-num to visuals —
+   JS just switches the data-theme attribute. */
+
+/* Plain-:root fallbacks (lower specificity than the theme files, so any
+   loaded theme always wins; they only keep the UI usable if a theme file
+   fails to load). Real values live in themes/classic-light.css and
+   themes/classic-dark.css. */
+:root {
+  --desktop-bg: #008080;
+  --win-face: #c0c0c0;
+  --win-highlight: #ffffff;
+  --win-light: #dfdfdf;
+  --win-shadow: #808080;
+  --win-dark: #0a0a0a;
+  --title-gradient-a: #000080;
+  --title-gradient-b: #1084d0;
+  --title-text: #ffffff;
+  --cell-face: #bdbdbd;
+  --cell-revealed: #bdbdbd;
+  --counter-bg: #000000;
+  --counter-fg: #ff0000;
+  --text-color: #000000;
+  --window-text: #000000;
+  --button-text: #000000;
+  --popup-text: #000000;
+  --modal-text: #000000;
+  --muted-text: #666666;
+  --inset-bg: #ffffff;
+  --inset-text: #000000;
+  --cell-bevel-extra: #5a5a5a;
+  --check-color: green;
+  --flag-color: red;
+  --num-1: blue;
+  --num-2: green;
+  --num-3: red;
+  --num-4: navy;
+  --num-5: maroon;
+  --num-6: teal;
+  --num-7: black;
+  --num-8: gray;
+  --num-default: black;
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+}
+
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg-color);
+  font-family: var(--font-ui);
+  background: var(--desktop-bg);
   color: var(--text-color);
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  padding: 8px;
+}
+
+.desktop {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- Win98 window chrome ---- */
+.window {
+  background: var(--win-face);
+  color: var(--window-text);
+  padding: 3px;
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.main-window {
+  display: flex;
+  flex-direction: column;
+  width: min(calc(100vw - 16px), calc((100vh - 170px) * 30 / 16));
+  width: min(calc(100vw - 16px), calc((100dvh - 170px) * 30 / 16));
+  margin: 0 auto;
+}
+
+/* Restored (windowed) state — Win98-style fixed window: 24px cells on the
+   30x16 expert board ≈ 720px board + chrome. Centered on the desktop.
+   Toggled from Settings → Board (Normal). */
+.main-window.restored {
+  width: 754px;
+  max-width: calc(100vw - 16px);
+  margin: 24px auto 0;
+}
+
+.main-window.restored .cell { font-size: 16px; }
+
+
+
+.title-bar {
+  background: linear-gradient(90deg, var(--title-gradient-a), var(--title-gradient-b));
+  color: var(--title-text);
+  font-weight: bold;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  padding: 3px 2px 3px 8px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  user-select: none;
 }
 
-#theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background: none;
+.title-bar-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Themed title icons (pure CSS glyphs): <span class="ticon" data-icon="bomb"> */
+.ticon::before {
+  font-family: var(--font-emoji);
+  font-weight: normal;
+}
+.ticon[data-icon="bomb"]::before { content: var(--glyph-bomb); }
+.ticon[data-icon="trophy"]::before { content: var(--glyph-trophy); }
+.ticon[data-icon="party"]::before { content: var(--glyph-party); }
+.ticon[data-icon="antenna"]::before { content: var(--glyph-antenna); }
+.ticon[data-icon="person"]::before { content: var(--glyph-person); }
+.ticon[data-icon="gear"]::before { content: var(--glyph-gear); }
+.ticon[data-icon="race"]::before { content: var(--glyph-race); }
+.ticon[data-icon="close"]::before { content: var(--glyph-close); }
+
+.title-bar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.window-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sunken {
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+/* Title-bar small buttons (square, icons drawn in pure CSS) */
+.win98-title-btn {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  padding: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--win-face);
+  color: var(--button-text);
   border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
 }
 
-
-
-.header-left, .header-center, .header-right {
-  background: var(--bg-color);
-  border-radius: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  font-family: monospace;
-  font-size: 1.8rem;
-  color: var(--text-color);
+.win98-title-btn:active {
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
 }
-.header-left { flex: 1; text-align: left; }
-.header-center { flex: 0; text-align: center; cursor: pointer; }
-.header-right { flex: 1; text-align: right; }
 
-header {
+/* Standard Win98 push button */
+.win98-btn {
+  font-family: inherit;
+  font-size: 13px;
+  min-width: 88px;
+  padding: 5px 16px;
+  background: var(--win-face);
+  color: var(--button-text);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.win98-btn:active,
+.win98-btn.active {
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
+}
+
+.win98-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+/* ---- Status / header panel ---- */
+.status-panel {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: var(--win-face);
+  /* Fixed height: the face button is absolutely positioned, so it no longer
+     stretches the header — 46px face + 2×8px padding, as before. */
+  min-height: 62px;
 }
 
+.header-right {
+  margin-left: auto;
+}
 
-.info {
+.header-left, .header-right {
+  font-family: var(--font-counter);
+  font-weight: normal;
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 6px 8px;
+  text-align: center;
+  user-select: none;
+  /* Win98 LCD: red seven-seg digits on black, thin sunken bezel */
+  background: var(--counter-bg);
+  color: var(--counter-fg);
+  min-width: 3ch;
+  letter-spacing: 2px;
+  text-shadow: 0 0 6px currentColor;
+  box-shadow:
+    inset -1px -1px var(--win-light),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-highlight),
+    inset 2px 2px var(--win-shadow);
+  /* Crisp blocky pixels instead of smooth antialiasing (Chromium/WebKit). */
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+#timer, #mines-left {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  gap: 1rem;
   align-items: center;
+  justify-content: center;
+}
+
+/* The face button — a real raised Win98 button */
+.face-btn {
+  width: 46px;
+  height: 46px;
+  font-size: 26px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--win-face);
+  border: none;
+  padding: 0;
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.face-btn:active,
+.face-btn.pressed {
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
+}
+
+.face-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+/* The face button glyph comes from the theme (pure CSS).
+   JS only sets data-face="smile|won|lost|suspense". */
+#status-emoji { font-size: 0; }
+#status-emoji::after {
+  font-size: 26px;
+  line-height: 1;
+  font-family: var(--font-emoji);
+}
+#status-emoji[data-face="smile"]::after { content: var(--glyph-face-smile); }
+#status-emoji[data-face="won"]::after { content: var(--glyph-face-won); }
+#status-emoji[data-face="lost"]::after { content: var(--glyph-face-lost); }
+#status-emoji[data-face="suspense"]::after { content: var(--glyph-face-suspense); }
+
+/* Disabled in multiplayer (new game would desync the match) — must render
+   exactly like the enabled button: browsers gray out :disabled controls via
+   their own stylesheet, so override all of it. Emojis keep updating. */
+.face-btn:disabled {
+  cursor: default;
+  opacity: 1;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Anchor for the pop-up menu under the menu button */
+.menu-anchor { position: relative; }
+
+/* CSS-drawn title-bar icons (crisp at any size, theme ink via currentColor) */
+.css-icon { display: block; }
+
+/* X: two 2px bars rotated ±45° */
+.icon-close {
+  position: relative;
+  width: 12px;
+  height: 12px;
+}
+.icon-close::before,
+.icon-close::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 5px;
+  width: 10px;
+  height: 2px;
+  background: currentColor;
+}
+.icon-close::before { transform: rotate(45deg); }
+.icon-close::after { transform: rotate(-45deg); }
+
+/* Menu: three 2px bars with even 2px gaps — a real element per bar, no
+   shadows, so the 10px-tall box centers exactly in the square button */
+.icon-menu {
+  width: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.icon-menu i {
+  display: block;
+  height: 2px;
+  background: currentColor;
+}
+
+/* Win98 pop-up menu */
+.popup-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 168px;
+  padding: 2px;
+  background: var(--win-face);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.popup-menu.hidden { display: none; }
+
+.popup-item {
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  padding: 5px 18px 5px 10px;
+  background: transparent;
+  color: var(--popup-text);
+  border: none;
+  white-space: nowrap;
+}
+
+.popup-item:hover,
+.popup-item:focus-visible {
+  background: var(--title-gradient-a);
+  color: var(--title-text);
+  outline: none;
+}
+
+/* ---- Win98 dialog system (groupbox sections + grid-aligned rows) ---- */
+.modal-content { text-align: left; }
+
+.groupbox {
+  margin: 0 0 10px;
+  padding: 8px 10px 10px;
+  min-width: 0;
+  border: 1px solid var(--win-shadow);
+  box-shadow:
+    1px 0 0 var(--win-highlight),
+    0 1px 0 var(--win-highlight),
+    1px 1px 0 var(--win-highlight);
+}
+
+.groupbox > legend {
+  font-size: 13px;
+  padding: 0 5px;
+  margin-left: 2px;
+  background: var(--win-face);
+  color: var(--modal-text);
+}
+
+.dlg-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  margin: 6px 0;
+}
+
+.dlg-row:last-child { margin-bottom: 2px; }
+
+.dlg-label {
+  font-size: 13px;
+  color: var(--modal-text);
+  white-space: nowrap;
+}
+
+.dlg-hint {
+  font-size: 12px;
+  color: var(--modal-text);
+  margin: 6px 0 2px;
+}
+
+.dlg-centered { justify-items: start; }
+
+.list-toolbar { grid-template-columns: minmax(0, 1fr) auto; }
+
+.seg-row {
+  display: flex;
+  gap: 6px;
+}
+
+.small-btn {
+  min-width: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.default-btn { font-weight: bold; }
+
+.mono { font-family: var(--font-mono); }
+
+.text-input {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  width: 100%;
+  max-width: 170px;
+  min-width: 0;
+  padding: 4px 6px;
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+  outline: none;
+}
+
+.initials-input {
+  max-width: 90px;
+  text-align: center;
+}
+
+.settings-content { text-align: left; }
+
+.settings-content .theme-select { margin: 0; width: 100%; }
+
+.theme-select {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  max-width: 220px;
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+  outline: none;
+}
+
+#settings-initials { text-align: left; }
+
+/* Gameplay section inside the settings modal */
+.settings-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 5px 0;
+  cursor: default;
+  color: var(--modal-text);
+}
+
+/* Win98 3D checkbox: sunken white well with beveled edges, CSS-drawn tick */
+.settings-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  margin: 0;
+  background: var(--inset-bg);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+  position: relative;
+  cursor: default;
+}
+
+.settings-check input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border-right: 2px solid var(--inset-text);
+  border-bottom: 2px solid var(--inset-text);
+  transform: rotate(45deg);
+}
+
+.settings-check input[type="checkbox"]:focus-visible {
+  outline: 1px dotted var(--modal-text);
+  outline-offset: 2px;
+}
+
+.key-fields {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.keys-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.key-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--modal-text);
+  min-width: 0;
+}
+
+.key-field > span { white-space: nowrap; }
+
+.key-input {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  text-align: center;
+  width: 2.2em;
+  padding: 3px 2px;
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+  outline: none;
+}
+
+.win98-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Maximize/restore title-bar button */
+#window-toggle {
+  font-weight: bold;
+}
+
+/* ---- Board (fluid: fills the window, cells stay square) ---- */
+.board-panel {
+  padding: 6px;
+  background: var(--win-face);
+  display: flex;
   justify-content: center;
 }
 
 #grid {
   display: grid;
-  grid-template-columns: repeat(30, var(--cell-size));
-  grid-template-rows: repeat(16, var(--cell-size));
-  background: var(--grid-bg);
-  gap: 1px;
+  grid-template-columns: repeat(30, 1fr);
+  grid-template-rows: repeat(16, 1fr);
+  gap: 0;
+  background: var(--win-shadow);
+  border: none;
+  width: 100%;
+  aspect-ratio: 30 / 16;
 }
 
 .cell {
-  width: var(--cell-size);
-  height: var(--cell-size);
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  background: var(--cell-face);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-shadow),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--cell-bevel-extra),
+    inset 2px 2px var(--win-light);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
+  font-size: clamp(8px, 2.2vmin, 18px);
+  line-height: 1;
+  font-family: var(--font-cell);
   user-select: none;
+  overflow: hidden;
 }
+
+/* Pure-CSS number colors: JS sets data-num="1".."8", the theme owns the ink. */
+.cell[data-num="1"] { color: var(--num-1); }
+.cell[data-num="2"] { color: var(--num-2); }
+.cell[data-num="3"] { color: var(--num-3); }
+.cell[data-num="4"] { color: var(--num-4); }
+.cell[data-num="5"] { color: var(--num-5); }
+.cell[data-num="6"] { color: var(--num-6); }
+.cell[data-num="7"] { color: var(--num-7); }
+.cell[data-num="8"] { color: var(--num-8); }
+
+/* Pure-CSS board glyphs: JS sets data-glyph, the theme owns the character. */
+.cell[data-glyph]::after {
+  font-family: var(--font-emoji);
+  font-weight: normal;
+  line-height: 1;
+}
+.cell[data-glyph="flag"]::after { content: var(--glyph-flag); }
+.cell[data-glyph="question"]::after { content: var(--glyph-question); }
+.cell[data-glyph="explosion"]::after { content: var(--glyph-explosion); }
+.cell[data-glyph="bomb"]::after { content: var(--glyph-bomb); }
+.cell[data-glyph="wrong"]::after { content: var(--glyph-wrong); }
+.cell[data-glyph="flag"] { color: var(--flag-color); }
 
 .cell.revealed {
-  background: var(--grid-bg);
-  cursor: default;
+  background: var(--cell-revealed);
+  box-shadow: none;
+  border: 1px solid var(--win-shadow);
 }
 
-.cell.flagged {
-  background: var(--bg-color);
-  color: red;
+/* Pressed state while holding the mouse down (like the face button),
+   plus the press-preview on neighbours of a held revealed number */
+.cell:not(.revealed):active,
+.cell:not(.revealed).preview {
+  background: var(--cell-revealed);
+  box-shadow: none;
+  border: 1px solid var(--win-shadow);
 }
 
+.cell.flagged, .cell.questioned {
+  box-shadow:
+    inset -1px -1px var(--win-shadow),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--cell-bevel-extra),
+    inset 2px 2px var(--win-light);
+}
+
+/* ---- Leaderboard / modals ---- */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 50;
+  padding: 16px;
 }
 
-.modal.hidden {
-  display: none;
+.modal.hidden { display: none; }
+
+.modal-window {
+  min-width: 320px;
+  max-width: 420px;
+  width: max-content;
 }
+
+#settings-modal .modal-window { width: 420px; max-width: calc(100vw - 32px); }
+.scores-window { width: 380px; max-width: calc(100vw - 32px); }
+.net-window { width: 460px; max-width: calc(100vw - 32px); }
+
+#leaderboard { color: var(--modal-text); }
+
+.modal-content .result-title,
+#leaderboard h2,
+.modal-content h2 {
+  font-size: 14px;
+  margin: 2px 0 8px;
+  color: var(--modal-text);
+  text-align: center;
+}
+
+/* High scores as a Win98 listview: header + sunken grid-aligned rows */
+.scores-head {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 64px;
+  gap: 8px;
+  padding: 0 8px 4px;
+  font-size: 11px;
+  color: var(--muted-text);
+}
+
+.scores-head span:nth-child(3) { text-align: right; }
+
+.scores-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  min-height: 120px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  border: none;
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.scores-list:empty::after {
+  content: "No scores yet — be the first!";
+  display: block;
+  padding: 8px 4px;
+  color: var(--muted-text);
+  font-size: 12px;
+  font-family: var(--font-ui);
+}
+
+.scores-list li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 64px;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-bottom: 1px dotted var(--muted-text);
+}
+
+.scores-list li:last-child { border-bottom: none; }
+
+.scores-list li.top-three { font-weight: bold; }
+
+/* The just-submitted score after a completed game — red, ranked or not */
+.scores-list li.score-new { color: red; font-weight: bold; }
+
+.scores-list .score-rank { white-space: nowrap; }
+.scores-list .score-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scores-list .score-time { text-align: right; font-variant-numeric: tabular-nums; }
 
 .modal-content {
-  background: var(--bg-color);
-  padding: 2rem;
-  border-radius: 8px;
-  text-align: center;
+  color: var(--modal-text);
+  min-width: 260px;
+}
+
+.modal-content p { margin: 6px 0 8px; font-size: 13px; }
+
+.modal-content input[type="text"] { outline: none; }
+
+/* Classic dialog buttons live bottom-right; first button is the default */
+.button-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.button-row.dlg-buttons { padding-top: 2px; }
+
+/* ---- LAN multiplayer ---- */
+
+.modal-content .hint {
+  font-size: 11px;
+  opacity: 0.75;
+  margin-top: 10px;
+}
+
+.net-content { text-align: left; }
+
+.net-content p {
+  margin: 8px 0 4px;
+  font-size: 13px;
+}
+
+.game-code-row { margin: 2px 0; }
+
+.game-code {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  letter-spacing: 4px;
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  padding: 2px 10px 2px 14px;
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+  white-space: nowrap;
+}
+
+.seed-row .mono { font-size: 13px; }
+
+/* Win98 status bar: sunken face-colored strip */
+.status-line {
+  margin: 6px 0 2px;
+  padding: 4px 6px;
+  min-height: 24px;
+  font-size: 12px;
+  font-style: normal;
+  background: var(--win-face);
+  color: var(--modal-text);
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow);
+}
+
+.games-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  box-shadow:
+    inset -1px -1px var(--win-highlight),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.games-list:empty::after {
+  content: "Loading games…";
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.game-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 2px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-bottom: 1px dotted var(--muted-text);
+}
+
+.game-row:last-child { border-bottom: none; }
+
+.games-notice {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--muted-text);
+}
+
+.steps {
+  list-style: none;
+  margin: 8px 0 4px;
+  padding: 0;
+  font-size: 12px;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  padding: 2px 0 2px 4px;
+  opacity: 0.55;
+}
+
+.steps li::before {
+  content: counter(step) ". ";
+  font-family: var(--font-mono);
+}
+
+.steps li.done {
+  opacity: 1;
+}
+
+.steps li.done::after {
+  content: " " var(--glyph-check);
+  color: var(--check-color);
+  font-weight: bold;
+}
+
+.steps li.active {
+  opacity: 1;
+  font-weight: bold;
+}
+
+.steps li.active::after {
+  content: " …";
+  animation: step-blink 1s steps(2) infinite;
+}
+
+@keyframes step-blink {
+  50% { opacity: 0.2; }
+}
+
+.steps.hidden { display: none; }
+
+.join-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.games-empty {
+  font-size: 12px;
+  color: var(--muted-text);
+  padding: 6px 2px;
+}
+
+.join-btn {
+  min-width: 64px;
+  padding: 3px 10px;
+}
+
+.net-status {
+  min-height: 24px;
+  font-size: 12px;
+}
+
+#name-prompt-input {
+  text-transform: uppercase;
+}
+
+/* Narrow screens: keep chrome compact; the board itself scales fluidly */
+@media (max-width: 780px) {
+  .window-body { padding: 6px; }
+  .status-panel { gap: 8px; padding: 6px; min-height: 50px; }
+  .header-left, .header-right { font-size: 1.1rem; }
+  .face-btn { width: 38px; height: 38px; font-size: 22px; }
+  #status-emoji::after { font-size: 22px; }
+}
+
+@media (max-width: 480px) {
+  .modal-window,
+  #settings-modal .modal-window,
+  .scores-window,
+  .net-window {
+    width: 100%;
+    min-width: 0;
+    max-width: calc(100vw - 32px);
+  }
+  .dlg-row { grid-template-columns: 72px minmax(0, 1fr) auto; }
+  .keys-grid { grid-template-columns: 1fr; }
+  .game-code { font-size: 17px; letter-spacing: 3px; }
 }

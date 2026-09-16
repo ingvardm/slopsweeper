@@ -1,0 +1,76 @@
+/* Terminal theme — phosphor-green-on-black dark theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="terminal"] {
+  /* ---- colors (phosphor terminal green) ---- */
+  --desktop-bg: #020805;
+  --win-face: #1d2b20;
+  --win-highlight: #3d5a44;
+  --win-light: #2c4032;
+  --win-shadow: #0b120d;
+  --win-dark: #000000;
+  --title-gradient-a: #013b1c;
+  --title-gradient-b: #00a550;
+  --title-text: #e0ffe0;
+  --cell-face: #243529;
+  --cell-revealed: #161f18;
+  --counter-bg: #000000;
+  --counter-fg: #33ff66;
+  --text-color: #b9e6bd;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #b9e6bd;
+  --button-text: #b9e6bd;
+  --popup-text: #b9e6bd;
+  --modal-text: #b9e6bd;
+  --muted-text: #6f9a76;
+  --inset-bg: #0a120c;
+  --inset-text: #b9e6bd;
+  --cell-bevel-extra: #0b120d;
+  --check-color: #33ff66;
+  --flag-color: #ff5555;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #6fa8ff;
+  --num-2: #33ff66;
+  --num-3: #ff6b5e;
+  --num-4: #9a8aff;
+  --num-5: #ff9a5e;
+  --num-6: #5ed6d6;
+  --num-7: #9aa89b;
+  --num-8: #6f7a6f;
+  --num-default: #9aa89b;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (classic-dark set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "🧨";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

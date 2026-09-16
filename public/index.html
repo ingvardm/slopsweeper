@@ -1,38 +1,283 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="classic-light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minesweeper</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Microslop Minesweeper</title>
+  <link rel="stylesheet" href="themes/classic-light.css?v=1" />
+  <link rel="stylesheet" href="themes/classic-dark.css?v=1" />
+  <link rel="stylesheet" href="themes/litterbox.css?v=1" />
+  <link rel="stylesheet" href="themes/fallout.css?v=1" />
+  <link rel="stylesheet" href="themes/glacier.css?v=1" />
+  <link rel="stylesheet" href="themes/sakura.css?v=1" />
+  <link rel="stylesheet" href="themes/terminal.css?v=1" />
+  <link rel="stylesheet" href="themes/grape.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
-  <header>
-    <div class="header-left"><span id="timer">00:00</span></div>
-    <div class="header-center"><span id="status-emoji">😊</span></div>
-    <div class="header-right"><span id="mines-left">99</span></div>
-    <button id="theme-toggle">🌙</button>
-  </header>
+  <div class="desktop">
+    <div class="window main-window">
+      <div class="title-bar">
+        <span class="title-bar-text" id="board-title"><span class="ticon" data-icon="bomb" aria-hidden="true"></span> <span id="board-title-text">Microslop Minesweeper</span></span>
+        <div class="title-bar-controls menu-anchor">
+          <button id="menu-toggle" class="win98-title-btn" title="Menu" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false"><span class="css-icon icon-menu" aria-hidden="true"><i></i><i></i><i></i></span></button>
+          <div id="popup-menu" class="popup-menu hidden" role="menu">
+            <button class="popup-item" role="menuitem" data-act="scores">View High-Scores</button>
+            <button class="popup-item" role="menuitem" data-act="host">Host a Game</button>
+            <button class="popup-item" role="menuitem" data-act="join">Join a Game</button>
+            <button class="popup-item" role="menuitem" data-act="settings">Settings</button>
+          </div>
+        </div>
+      </div>
+      <div class="window-body">
+        <header class="status-panel sunken">
+          <div class="header-left"><span id="timer">000</span></div>
+          <div class="header-center">
+            <button id="status-emoji" class="face-btn" data-face="smile" title="New game" aria-label="New game"></button>
+          </div>
+          <div class="header-right"><span id="mines-left">099</span></div>
+        </header>
 
-
-  <main>
-    <div id="grid" class="grid"></div>
-  </main>
-
-  <section id="leaderboard">
-    <h2>Top Scores</h2>
-    <ol id="scores-list"></ol>
-  </section>
-
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <h2>Victory!</h2>
-      <p>Enter your initials:</p>
-      <input type="text" id="initials" maxlength="3" />
-      <button id="submit-score">Submit</button>
+        <main class="board-panel sunken">
+          <div id="grid" class="grid"></div>
+        </main>
+      </div>
     </div>
   </div>
 
-  <script src="main.js"></script>
+  <div id="leaderboard-modal" class="modal hidden">
+    <div class="window modal-window scores-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="trophy" aria-hidden="true"></span> High Scores</span>
+        <div class="title-bar-controls">
+          <button id="leaderboard-close" class="win98-title-btn" aria-label="Close leaderboard"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <section id="leaderboard">
+          <fieldset class="groupbox">
+            <legend>Fastest times</legend>
+            <div class="scores-head" aria-hidden="true"><span>Rank</span><span>Player</span><span>Time</span></div>
+            <ol id="scores-list" class="scores-list"></ol>
+          </fieldset>
+          <div class="button-row dlg-buttons">
+            <button id="leaderboard-ok" class="win98-btn default-btn">OK</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="window modal-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="party" aria-hidden="true"></span> Victory!</span>
+        <div class="title-bar-controls">
+          <button id="victory-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-content">
+          <fieldset class="groupbox">
+            <legend>New high score</legend>
+            <div class="dlg-row dlg-centered">
+              <label class="dlg-label" for="initials">Initials:</label>
+              <input type="text" id="initials" class="text-input initials-input" maxlength="3" />
+            </div>
+          </fieldset>
+          <div class="button-row dlg-buttons">
+            <button id="submit-score" class="win98-btn default-btn">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="net-modal" class="modal hidden">
+    <div class="window modal-window net-window">
+      <div class="title-bar">
+        <span id="net-title" class="title-bar-text"><span class="ticon" data-icon="antenna" aria-hidden="true"></span> <span id="net-title-text">Host game</span></span>
+        <div class="title-bar-controls">
+          <button id="btn-net-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-content net-content">
+          <div id="host-pane">
+            <fieldset class="groupbox">
+              <legend>Game</legend>
+              <div class="dlg-row game-code-row">
+                <span class="dlg-label">Game code:</span>
+                <strong id="host-code" class="game-code">…</strong>
+              </div>
+              <div id="net-seed-row" class="dlg-row seed-row">
+                <span class="dlg-label">Board seed:</span>
+                <strong id="net-seed-value" class="mono">…</strong>
+              </div>
+              <p class="dlg-hint">Waiting for an opponent to join from the game list…</p>
+            </fieldset>
+            <fieldset class="groupbox">
+              <legend>Status</legend>
+              <ol id="host-steps" class="steps hidden">
+                <li>Game hosted</li>
+                <li>Opponent joined</li>
+                <li>Connected</li>
+              </ol>
+              <p id="host-status" class="net-status status-line">…</p>
+            </fieldset>
+          </div>
+          <div id="join-pane" class="hidden">
+            <fieldset class="groupbox">
+              <legend>Available games</legend>
+              <div class="dlg-row list-toolbar">
+                <span class="dlg-hint">Pick a hosted game:</span>
+                <button id="btn-refresh-games" class="win98-btn small-btn">Refresh list</button>
+              </div>
+              <ul id="games-list" class="games-list"></ul>
+              <ol id="join-steps" class="steps hidden">
+                <li>Offer received</li>
+                <li>Answer sent</li>
+                <li>Connected</li>
+              </ol>
+            </fieldset>
+            <fieldset class="groupbox">
+              <legend>Status</legend>
+              <p id="join-status" class="net-status status-line">…</p>
+            </fieldset>
+          </div>
+          <div class="button-row dlg-buttons">
+            <button id="btn-net-cancel" class="win98-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="name-modal" class="modal hidden">
+    <div class="window modal-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="person" aria-hidden="true"></span> Player initials</span>
+        <div class="title-bar-controls">
+          <button id="name-prompt-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-content">
+          <fieldset class="groupbox">
+            <legend>Player</legend>
+            <div class="dlg-row">
+              <label class="dlg-label" for="name-prompt-input">Initials:</label>
+              <input type="text" id="name-prompt-input" class="text-input" maxlength="16" autocomplete="off" />
+            </div>
+          </fieldset>
+          <div class="button-row dlg-buttons">
+            <button id="name-prompt-ok" class="win98-btn default-btn">OK</button>
+            <button id="name-prompt-cancel" class="win98-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="modal hidden">
+    <div class="window modal-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="gear" aria-hidden="true"></span> Settings</span>
+        <div class="title-bar-controls">
+          <button id="settings-close" class="win98-title-btn" aria-label="Close settings"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-content settings-content">
+          <fieldset class="groupbox">
+            <legend>Display</legend>
+            <div class="dlg-row">
+              <label class="dlg-label" for="theme-select">Theme:</label>
+              <select id="theme-select" class="theme-select">
+                <option value="classic-light">Classic light</option>
+                <option value="classic-dark">Classic dark</option>
+              <option value="litterbox">Litterbox</option>
+              <option value="fallout">Fallout</option>
+              <option value="glacier">Glacier</option>
+              <option value="sakura">Sakura</option>
+              <option value="terminal">Terminal</option>
+              <option value="grape">Grape</option>
+              </select>
+            </div>
+            <div class="dlg-row" role="group" aria-label="Window size">
+              <span class="dlg-label">Window:</span>
+              <div class="seg-row">
+                <button id="settings-size-normal" class="win98-btn small-btn">Normal</button>
+                <button id="settings-size-large" class="win98-btn small-btn">Large</button>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Player</legend>
+            <div class="dlg-row">
+              <label class="dlg-label" for="settings-initials">Initials:</label>
+              <input type="text" id="settings-initials" class="text-input" maxlength="16" autocomplete="off" />
+            </div>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Gameplay</legend>
+            <label class="settings-check" title="Right-click cycle includes a question mark">
+              <input type="checkbox" id="ctl-use-question" /> <span>Use ?</span>
+            </label>
+            <label class="settings-check" title="Left-click on a revealed number chords instead of previewing">
+              <input type="checkbox" id="ctl-left-chord" /> <span>Left click chording</span>
+            </label>
+            <label class="settings-check" title="Pressing left and right buttons together on a revealed number chords">
+              <input type="checkbox" id="ctl-emulate-middle" /> <span>Emulate middle button</span>
+            </label>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Keyboard shortcuts</legend>
+            <div class="keys-grid">
+              <label class="key-field" title="Simulates a left click"><span>Left:</span> <input type="text" id="ctl-key-left" class="key-input" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" /></label>
+              <label class="key-field" title="Simulates a right click"><span>Right:</span> <input type="text" id="ctl-key-right" class="key-input" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" /></label>
+              <label class="key-field" title="Simulates a middle click (chord)"><span>Middle:</span> <input type="text" id="ctl-key-middle" class="key-input" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" /></label>
+            </div>
+          </fieldset>
+          <div class="button-row dlg-buttons">
+            <button id="settings-ok" class="win98-btn default-btn">OK</button>
+            <button id="settings-cancel" class="win98-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mp-result-modal" class="modal hidden">
+    <div class="window modal-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="race" aria-hidden="true"></span> Match result</span>
+      </div>
+      <div class="window-body">
+        <div class="modal-content">
+          <fieldset class="groupbox">
+            <legend>Result</legend>
+            <h2 class="result-title"><span class="ticon" id="mp-result-icon" data-icon="trophy" aria-hidden="true"></span> <span id="mp-result-title">You win!</span></h2>
+            <p id="mp-result-text"></p>
+          </fieldset>
+          <div class="button-row dlg-buttons">
+            <button id="mp-result-ok" class="win98-btn default-btn">Rematch (new board)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/solver.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/gameplay.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/scores.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

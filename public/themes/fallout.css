@@ -1,0 +1,77 @@
+/* Fallout theme — dark theme with a palette inspired by the original
+ * Fallout 2 interface: olive-drab panels, khaki text, amber accents.
+ *
+ * Same contract as the other themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="fallout"] {
+  /* ---- colors (Fallout 2 inspired: dark olive, khaki, amber) ---- */
+  --desktop-bg: #14120c;
+  --win-face: #3b362b;
+  --win-highlight: #6b6250;
+  --win-light: #57503f;
+  --win-shadow: #14110b;
+  --win-dark: #000000;
+  --title-gradient-a: #2a2416;
+  --title-gradient-b: #5a4f35;
+  --title-text: #ffb000;
+  --cell-face: #4a4436;
+  --cell-revealed: #2e2a20;
+  --counter-bg: #0a0805;
+  --counter-fg: #ffb000;
+  --text-color: #d8c690;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #d8c690;
+  --button-text: #d8c690;
+  --popup-text: #d8c690;
+  --modal-text: #d8c690;
+  --muted-text: #8a7f63;
+  --inset-bg: #14110b;
+  --inset-text: #d8c690;
+  --cell-bevel-extra: #1c1912;
+  --check-color: #6fd66f;
+  --flag-color: #ffb000;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #6fa8ff;
+  --num-2: #6fd66f;
+  --num-3: #ff6b5e;
+  --num-4: #b79aff;
+  --num-5: #ff9a5e;
+  --num-6: #5ed6d6;
+  --num-7: #b0a58c;
+  --num-8: #8a8a8a;
+  --num-default: #b0a58c;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (light-theme defaults with Fallout overrides) ---- */
+  --glyph-face-smile: "😨";
+  --glyph-face-won: "😓";
+  --glyph-face-lost: "💀";
+  --glyph-face-suspense: "😰";
+  --glyph-flag: "⚠️";
+  --glyph-question: "❓";
+  --glyph-explosion: "☠️";
+  --glyph-bomb: "☢️";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

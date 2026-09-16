@@ -1,0 +1,76 @@
+/* Glacier theme — icy pale-blue light theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="glacier"] {
+  /* ---- colors (icy pale blue) ---- */
+  --desktop-bg: #0b3d5c;
+  --win-face: #cfdfe8;
+  --win-highlight: #ffffff;
+  --win-light: #e8f1f5;
+  --win-shadow: #7d99ad;
+  --win-dark: #1c2f3d;
+  --title-gradient-a: #01497c;
+  --title-gradient-b: #2a9db8;
+  --title-text: #ffffff;
+  --cell-face: #c2d5e0;
+  --cell-revealed: #bccfd9;
+  --counter-bg: #06222e;
+  --counter-fg: #4de3ff;
+  --text-color: #12303f;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #12303f;
+  --button-text: #12303f;
+  --popup-text: #12303f;
+  --modal-text: #12303f;
+  --muted-text: #5a7688;
+  --inset-bg: #f4fafc;
+  --inset-text: #12303f;
+  --cell-bevel-extra: #5f7d90;
+  --check-color: #0a7d4f;
+  --flag-color: #d63b2f;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #0b5fa5;
+  --num-2: #0a7d4f;
+  --num-3: #d63b2f;
+  --num-4: #1c3f94;
+  --num-5: #8c2f2e;
+  --num-6: #0a7d84;
+  --num-7: #12303f;
+  --num-8: #5a7688;
+  --num-default: #12303f;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (classic-light set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "💣";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

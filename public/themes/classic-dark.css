@@ -1,0 +1,76 @@
+/* Classic Dark theme — copy of the original dark theme.
+ *
+ * Same contract as classic-light.css: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="classic-dark"] {
+  /* ---- colors (copied from the original .dark-theme palette) ---- */
+  --desktop-bg: #1e1e2e;
+  --win-face: #3f3f46;
+  --win-highlight: #6b6b76;
+  --win-light: #55555e;
+  --win-shadow: #1c1c22;
+  --win-dark: #000000;
+  --title-gradient-a: #1a1a4e;
+  --title-gradient-b: #2d5f8a;
+  --title-text: #ffffff;
+  --cell-face: #4b4b55;
+  --cell-revealed: #35353d;
+  --counter-bg: #000000;
+  --counter-fg: #ff5555;
+  --text-color: #e8e8e8;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #e8e8e8;
+  --button-text: #e8e8e8;
+  --popup-text: #e8e8e8;
+  --modal-text: #e8e8e8;
+  --muted-text: #aaaaaa;
+  --inset-bg: #22222a;
+  --inset-text: #e8e8e8;
+  --cell-bevel-extra: #22222a;
+  --check-color: lightgreen;
+  --flag-color: #ff5555;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: lightblue;
+  --num-2: lightgreen;
+  --num-3: lightcoral;
+  --num-4: royalblue;
+  --num-5: salmon;
+  --num-6: mediumturquoise;
+  --num-7: gray;
+  --num-8: lightgray;
+  --num-default: gray;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs for every used emoji/symbol ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "🧨";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

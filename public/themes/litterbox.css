@@ -1,0 +1,76 @@
+/* Litterbox theme — warm beige palette.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="litterbox"] {
+  /* ---- colors (warm beige palette) ---- */
+  --desktop-bg: #9c7c54;
+  --win-face: #e8d5b5;
+  --win-highlight: #fff8ec;
+  --win-light: #f0e2c8;
+  --win-shadow: #8a7355;
+  --win-dark: #3a2f23;
+  --title-gradient-a: #7a5c3e;
+  --title-gradient-b: #c49a6c;
+  --title-text: #fff8ec;
+  --cell-face: #dcc9a3;
+  --cell-revealed: #d3bd93;
+  --counter-bg: #2a2118;
+  --counter-fg: #ff6b35;
+  --text-color: #3a2f23;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #3a2f23;
+  --button-text: #3a2f23;
+  --popup-text: #3a2f23;
+  --modal-text: #3a2f23;
+  --muted-text: #7a6a55;
+  --inset-bg: #fff8ec;
+  --inset-text: #3a2f23;
+  --cell-bevel-extra: #8a7355;
+  --check-color: #5a7d3a;
+  --flag-color: #b5462f;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #2456a6;
+  --num-2: #4a7d2e;
+  --num-3: #c23b2e;
+  --num-4: #3b3b8c;
+  --num-5: #8c3b2e;
+  --num-6: #2e7d6e;
+  --num-7: #3a2f23;
+  --num-8: #7a6a55;
+  --num-default: #3a2f23;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (light-theme defaults with Litterbox overrides) ---- */
+  --glyph-face-smile: "😼";
+  --glyph-face-won: "😾";
+  --glyph-face-lost: "😹";
+  --glyph-face-suspense: "😺";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "💩";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}
