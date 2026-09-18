@@ -990,7 +990,7 @@ body {
   list-style: none;
   margin: 8px 0;
   padding: 4px;
-  max-height: 220px;
+  height: 224px;
   overflow-y: auto;
   background: var(--inset-bg);
   color: var(--inset-text);
@@ -1019,6 +1019,19 @@ body {
 }
 
 .game-row:last-child { border-bottom: none; }
+
+.game-row.selectable { cursor: pointer; }
+.game-row.selectable:hover { background: var(--win-light); }
+.game-row.selected {
+  background: var(--title-gradient-b);
+  color: var(--title-text);
+}
+
+.btn-group-left {
+  display: flex;
+  gap: 8px;
+  margin-right: auto;
+}
 
 .games-notice {
   font-size: 12px;

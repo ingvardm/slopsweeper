@@ -46,6 +46,7 @@ let mpJoiningId = null; // game code with a join currently in progress
 let _mpAnswerApplied = false; // host: guest answer received + applied
 let _mpAnswerAt = 0;
 let _mpConnWarned = false;
+let _mpSelectedGameId = null; // currently selected game in the list
 
 function mpStopPolling() {
   if (_mpPollTimer) {
@@ -512,6 +513,8 @@ async function mpRefreshGamesList() {
   try {
     const games = await mpApi('/api/games');
     $list.innerHTML = '';
+    _mpSelectedGameId = null;
+    _mpUpdateJoinBtn();
     if (hostingActive) {
       const note = document.createElement('li');
       note.className = 'games-notice';
@@ -528,27 +531,17 @@ async function mpRefreshGamesList() {
     games.forEach((g) => {
       const li = document.createElement('li');
       li.className = 'game-row';
+      const own = g.id === mpGameId;
+      const blocked = hostingActive || own || mpJoiningId;
+      if (!blocked) li.classList.add('selectable');
       const label = document.createElement('span');
       const age = Math.max(0, Math.round((Date.now() - g.createdAt) / 1000));
-      const own = g.id === mpGameId;
       label.textContent = `${String(g.hostName).toUpperCase()} · ${g.id} · ${age}s ago${own ? ' (yours)' : ''}`;
-      const btn = document.createElement('button');
-      btn.className = 'win98-btn join-btn';
-      if (hostingActive || own) {
-        btn.disabled = true;
-        btn.textContent = own ? 'Yours' : 'Hosting…';
-        btn.title = own
-          ? 'You cannot join your own game'
-          : 'Cancel your hosted game to join another';
-      } else if (mpJoiningId) {
-        btn.disabled = true;
-        btn.textContent = g.id === mpJoiningId ? 'Joining…' : 'Join';
-      } else {
-        btn.textContent = 'Join';
-        btn.addEventListener('click', () => mpJoinGame(g.id));
-      }
       li.appendChild(label);
-      li.appendChild(btn);
+      if (!blocked) {
+        li.dataset.gameId = g.id;
+        li.addEventListener('click', () => _mpSelectGame(g.id));
+      }
       $list.appendChild(li);
     });
   } catch (e) {
@@ -559,6 +552,23 @@ async function mpRefreshGamesList() {
     li.textContent = 'Could not load games. Is the server reachable?';
     $list.appendChild(li);
   }
+}
+
+function _mpSelectGame(id) {
+  _mpSelectedGameId = id;
+  const $list = document.getElementById('games-list');
+  if ($list) {
+    $list.querySelectorAll('.game-row').forEach((li) => {
+      li.classList.toggle('selected', li.dataset.gameId === id);
+    });
+  }
+  _mpUpdateJoinBtn();
+}
+
+function _mpUpdateJoinBtn() {
+  const $btn = document.getElementById('btn-join-game');
+  if (!$btn) return;
+  $btn.disabled = !_mpSelectedGameId || !!mpJoiningId;
 }
 
 async function mpJoinGame(id) {
@@ -639,13 +649,11 @@ async function mpJoinGame(id) {
   }
 }
 
-// Disable/enable all Join buttons in place (used while a join is running).
+// Disable/enable the list and Join button (used while a join is running).
 function $listFreeze(frozen) {
-  const $list = document.getElementById('games-list');
-  if (!$list) return;
-  $list.querySelectorAll('.join-btn').forEach((b) => {
-    b.disabled = !!frozen;
-  });
+  const $btn = document.getElementById('btn-join-game');
+  if ($btn) $btn.disabled = !!frozen;
+  if (frozen) _mpSelectedGameId = null;
 }
 
 async function mpLeaveLobby() {
@@ -736,6 +744,7 @@ function mpWireUI() {
   const $joinCancel = document.getElementById('btn-join-cancel');
   const $joinClose = document.getElementById('btn-join-close');
   const $refresh = document.getElementById('btn-refresh-games');
+  const $joinGame = document.getElementById('btn-join-game');
   const $resultOk = document.getElementById('mp-result-ok');
 
   // Another tab started/stopped hosting: refresh the list immediately.
@@ -749,6 +758,9 @@ function mpWireUI() {
   });
 
   if ($refresh) $refresh.addEventListener('click', mpRefreshGamesList);
+  if ($joinGame) $joinGame.addEventListener('click', () => {
+    if (_mpSelectedGameId && !mpJoiningId) mpJoinGame(_mpSelectedGameId);
+  });
 
   const netCancel = async () => {
     await mpLeaveLobby();
@@ -756,6 +768,7 @@ function mpWireUI() {
     mpIsHost = false;
     mpSeed = null;
     mpMatchStarted = false;
+    _mpSelectedGameId = null;
     mpHideNetModal();
     mpUpdateHud();
   };
