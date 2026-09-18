@@ -109,17 +109,11 @@
       </div>
       <div class="window-body">
         <div class="modal-content net-content">
-          <fieldset class="groupbox">
-            <legend>Game</legend>
-            <div class="dlg-row game-code-row">
-              <span class="dlg-label">Game code:</span>
-              <strong id="host-code" class="game-code">…</strong>
-            </div>
-          </fieldset>
-          <fieldset class="groupbox">
-            <legend>Status</legend>
-            <p id="host-status" class="net-status status-line">…</p>
-          </fieldset>
+          <p class="host-code-line">Game code: <strong id="host-code">…</strong></p>
+          <div class="win98-progress-wrap">
+            <p class="progress-label">Waiting for opponent</p>
+            <div class="win98-progress"><div class="win98-progress-bar"></div></div>
+          </div>
           <div class="button-row dlg-buttons">
             <button id="btn-host-cancel" class="win98-btn">Cancel</button>
           </div>
@@ -138,13 +132,10 @@
       </div>
       <div class="window-body">
         <div class="modal-content net-content">
-          <fieldset class="groupbox">
-            <legend>Available games</legend>
-            <ul id="games-list" class="games-list"></ul>
-          </fieldset>
+          <ul id="games-list" class="games-list"></ul>
           <div class="button-row dlg-buttons">
             <div class="btn-group-left">
-              <button id="btn-refresh-games" class="win98-btn small-btn">Refresh</button>
+              <button id="btn-refresh-games" class="win98-btn">Refresh</button>
               <button id="btn-join-game" class="win98-btn" disabled>Join</button>
             </div>
             <button id="btn-join-cancel" class="win98-btn">Cancel</button>
@@ -273,13 +264,13 @@
       </div>
       <div class="window-body">
         <div class="modal-content">
-          <fieldset class="groupbox">
-            <legend>Result</legend>
+          <div class="result-box">
             <h2 class="result-title"><span class="ticon" id="mp-result-icon" data-icon="trophy" aria-hidden="true"></span> <span id="mp-result-title">You win!</span></h2>
-            <p id="mp-result-text"></p>
-          </fieldset>
-          <div class="button-row dlg-buttons">
-            <button id="mp-result-ok" class="win98-btn default-btn">Rematch (new board)</button>
+            <p id="mp-result-text" class="result-text"></p>
+          </div>
+          <div class="button-row centered-row">
+            <button id="mp-result-ok" class="win98-btn default-btn">Rematch</button>
+            <button id="mp-result-cancel" class="win98-btn">Cancel</button>
           </div>
         </div>
       </div>

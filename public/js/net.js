@@ -47,6 +47,8 @@ let _mpAnswerApplied = false; // host: guest answer received + applied
 let _mpAnswerAt = 0;
 let _mpConnWarned = false;
 let _mpSelectedGameId = null; // currently selected game in the list
+let _mpRematchRequested = false; // true after this player clicks Rematch
+let _mpRemoteRematchRequested = false; // true when remote player sent rematch-request
 
 function mpStopPolling() {
   if (_mpPollTimer) {
@@ -91,6 +93,8 @@ function mpCloseConnection() {
   _mpAnswerApplied = false;
   _mpAnswerAt = 0;
   _mpConnWarned = false;
+  _mpRematchRequested = false;
+  _mpRemoteRematchRequested = false;
   try {
     if (mpDc) mpDc.close();
   } catch (e) {}
@@ -193,23 +197,44 @@ function mpFreshSeed() {
   return s;
 }
 
-// Rematch: the host picks a fresh seed and deals it to the guest over the
-// DataChannel, so both restart on the same NEW board. The guest only sends
-// a request and waits; the host acts on it only while the match is over
-// (stale/duplicate requests mid-match are ignored).
+// Rematch: both players must click Rematch before a new game starts.
+// Each side sends a 'rematch-request' and waits. When the host sees both
+// sides have requested, it generates a fresh seed and deals it to the guest.
 function mpRequestRematch() {
-  if (!mpIsMultiplayer() || mpSeed === null) return;
-  if (mpIsHost) {
-    const seed = mpFreshSeed();
-    mpSend({ t: 'rematch', seed });
-    mpStartSeededMatch(seed);
-  } else {
-    mpSend({ t: 'rematch-request' });
-    const $x = document.getElementById('mp-result-text');
-    if ($x) $x.textContent = 'Waiting for the host to deal a new board…';
-    const $btn = document.getElementById('mp-result-ok');
-    if ($btn) $btn.disabled = true;
+  if (!mpIsMultiplayer() || mpSeed === null || _mpRematchRequested) return;
+  _mpRematchRequested = true;
+  mpSend({ t: 'rematch-request' });
+  const $x = document.getElementById('mp-result-text');
+  if ($x) $x.textContent = 'Waiting for opponent...';
+  const $btn = document.getElementById('mp-result-ok');
+  if ($btn) $btn.disabled = true;
+  // If the remote player already requested before us, start immediately.
+  if (_mpRemoteRematchRequested && mpIsHost) {
+    _mpStartRematch();
   }
+}
+
+function _mpStartRematch() {
+  _mpRematchRequested = false;
+  _mpRemoteRematchRequested = false;
+  const seed = mpFreshSeed();
+  mpSend({ t: 'rematch', seed });
+  mpHideResult();
+  mpStartSeededMatch(seed);
+}
+
+async function mpCancelRematch() {
+  mpSend({ t: 'rematch-cancel' });
+  _mpRematchRequested = false;
+  _mpRemoteRematchRequested = false;
+  await mpLeaveLobby();
+  mpMode = 'solo';
+  mpIsHost = false;
+  mpSeed = null;
+  mpMatchStarted = false;
+  mpMatchOver = false;
+  mpHideResult();
+  mpUpdateHud();
 }
 
 function mpOnRemoteMessage(msg) {
@@ -226,14 +251,28 @@ function mpOnRemoteMessage(msg) {
     mpTryStart();
   } else if (msg.t === 'rematch' && Number.isInteger(msg.seed)) {
     if (!mpIsMultiplayer()) return;
+    _mpRematchRequested = false;
+    _mpRemoteRematchRequested = false;
     mpHideResult();
     mpStartSeededMatch(msg.seed >>> 0);
   } else if (msg.t === 'rematch-request') {
-    if (mpIsHost && mpIsMultiplayer() && mpMatchOver) {
-      const seed = mpFreshSeed();
-      mpSend({ t: 'rematch', seed });
-      mpStartSeededMatch(seed);
+    if (!mpIsMultiplayer() || !mpMatchOver) return;
+    _mpRemoteRematchRequested = true;
+    if (mpIsHost && _mpRematchRequested) {
+      _mpStartRematch();
     }
+  } else if (msg.t === 'rematch-cancel') {
+    if (!mpIsMultiplayer()) return;
+    _mpRematchRequested = false;
+    _mpRemoteRematchRequested = false;
+    mpHideResult();
+    mpLeaveLobby();
+    mpMode = 'solo';
+    mpIsHost = false;
+    mpSeed = null;
+    mpMatchStarted = false;
+    mpMatchOver = false;
+    mpUpdateHud();
   } else if (msg.t === 'state') {
     mpRemoteRevealed = Number.isInteger(msg.revealed) ? msg.revealed : 0;
     if (msg.status === 'won' || msg.status === 'lost' || msg.status === 'playing') {
@@ -386,6 +425,8 @@ function mpDecideResult() {
 
 function mpEndMatch(outcome, title, text) {
   mpMatchOver = true;
+  _mpRematchRequested = false;
+  _mpRemoteRematchRequested = false;
   stopTimer();
   updateStatusEmoji(outcome === 'local' ? 'won' : outcome === 'remote' ? 'lost' : 'default');
   mpUpdateHud();
@@ -512,9 +553,8 @@ async function mpRefreshGamesList() {
   }
   try {
     const games = await mpApi('/api/games');
+    const prevSelected = _mpSelectedGameId;
     $list.innerHTML = '';
-    _mpSelectedGameId = null;
-    _mpUpdateJoinBtn();
     if (hostingActive) {
       const note = document.createElement('li');
       note.className = 'games-notice';
@@ -544,6 +584,13 @@ async function mpRefreshGamesList() {
       }
       $list.appendChild(li);
     });
+    // Restore selection if the previously selected game is still in the list.
+    if (prevSelected && games.some((g) => g.id === prevSelected)) {
+      _mpSelectGame(prevSelected);
+    } else {
+      _mpSelectedGameId = null;
+      _mpUpdateJoinBtn();
+    }
   } catch (e) {
     console.warn(e);
     $list.innerHTML = '';
@@ -746,6 +793,7 @@ function mpWireUI() {
   const $refresh = document.getElementById('btn-refresh-games');
   const $joinGame = document.getElementById('btn-join-game');
   const $resultOk = document.getElementById('mp-result-ok');
+  const $resultCancel = document.getElementById('mp-result-cancel');
 
   // Another tab started/stopped hosting: refresh the list immediately.
   window.addEventListener('storage', (e) => {
@@ -778,7 +826,9 @@ function mpWireUI() {
   if ($joinClose) $joinClose.addEventListener('click', netCancel);
 
   if ($resultOk) $resultOk.addEventListener('click', () => {
-    // Rematch on a fresh seed dealt to both peers (see mpRequestRematch).
     mpRequestRematch();
+  });
+  if ($resultCancel) $resultCancel.addEventListener('click', () => {
+    mpCancelRematch();
   });
 }
