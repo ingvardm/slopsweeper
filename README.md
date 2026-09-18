@@ -34,6 +34,47 @@ node server.js     # start the Express server (default port 3000)
 open http://localhost:3000
 ```
 
+Environment variables: `PORT` (default `3000`), `HOST` (default `0.0.0.0`),
+`SCORES_FILE` (default `./scores.json`). Health check: `GET /health` → `{"ok":true}`.
+
+## Docker
+
+```bash
+# Build
+docker build -t slopsweeper:latest .
+
+# Run (persists high-scores in a named volume)
+docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data slopsweeper:latest
+open http://localhost:3000
+
+# Or with Compose
+docker compose up --build -d
+```
+
+### Push to a registry
+
+```bash
+# Docker Hub (replace ingvardm with your username)
+docker tag slopsweeper:latest ingvardm/slopsweeper:1.0.0
+docker tag slopsweeper:latest ingvardm/slopsweeper:latest
+docker login
+docker push ingvardm/slopsweeper:1.0.0
+docker push ingvardm/slopsweeper:latest
+
+# GitHub Container Registry
+docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:1.0.0
+docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:latest
+echo "$CR_PAT" | docker login ghcr.io -u ingvardm --password-stdin
+docker push ghcr.io/ingvardm/slopsweeper:1.0.0
+docker push ghcr.io/ingvardm/slopsweeper:latest
+```
+
+Pull/run anywhere with Docker:
+
+```bash
+docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data ingvardm/slopsweeper:latest
+```
+
 ## Development Notes
 - `timerInterval` is declared globally to avoid `ReferenceError` when resetting the timer.
 - The UI theme can be toggled with the button; the choice is persisted in `localStorage`.

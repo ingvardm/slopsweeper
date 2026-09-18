@@ -1,0 +1,20 @@
+services:
+  minesweeper:
+    build: .
+    # Replace with your registry repo before pushing, e.g.:
+    #   image: ingvardm/slopsweeper:latest          # Docker Hub
+    #   image: ghcr.io/ingvardm/slopsweeper:latest  # GitHub Container Registry
+    image: slopsweeper:latest
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      HOST: 0.0.0.0
+      SCORES_FILE: /app/data/scores.json
+    volumes:
+      # Persist high-scores across container restarts/updates.
+      - scores:/app/data
+    restart: unless-stopped
+
+volumes:
+  scores:

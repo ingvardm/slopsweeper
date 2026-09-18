@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+public/.DS_Store
+scores.json
+data
+*.log
+coverage
+.nyc_output

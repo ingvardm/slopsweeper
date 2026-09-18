@@ -4,6 +4,15 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+// SCORES_FILE lets Docker mount a persistent volume (e.g. -v scores:/app/data).
+// Defaults to ./scores.json for plain `node server.js` runs.
+const scoresFile = process.env.SCORES_FILE || path.join(__dirname, 'scores.json');
+
+// Health check for Docker HEALTHCHECK / orchestrators. No dependencies.
+app.get('/health', (req, res) => {
+  res.json({ ok: true });
+});
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -21,8 +30,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
   },
 }));
 
-// Ensure scores.json exists
-const scoresFile = path.join(__dirname, 'scores.json');
+// Ensure scores.json exists (create parent dir too, for mounted volumes)
+try {
+  fs.mkdirSync(path.dirname(scoresFile), { recursive: true });
+} catch (err) {
+  console.error('Error creating scores directory:', err);
+}
 if (!fs.existsSync(scoresFile)) {
   fs.writeFileSync(scoresFile, JSON.stringify([]));
 }
@@ -203,6 +216,6 @@ app.delete('/api/games/:id', (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Minesweeper server listening on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Minesweeper server listening on http://${HOST}:${PORT}`);
 });
