@@ -30,14 +30,25 @@ app.use(express.static(path.join(__dirname, 'public'), {
   },
 }));
 
-// Ensure scores.json exists (create parent dir too, for mounted volumes)
+// Ensure scores.json exists (create parent dir too, for mounted volumes).
+// Don't crash on EACCES (e.g. TrueNAS host-path bind mounted as root/568
+// while we run as uid 1000 `node`). Fall back to /tmp so the app still starts;
+// scores just won't persist until perms are fixed (chown -R 1000:1000 <hostpath>).
+let scoresWritable = true;
 try {
   fs.mkdirSync(path.dirname(scoresFile), { recursive: true });
 } catch (err) {
   console.error('Error creating scores directory:', err);
+  scoresWritable = false;
 }
-if (!fs.existsSync(scoresFile)) {
-  fs.writeFileSync(scoresFile, JSON.stringify([]));
+if (scoresWritable && !fs.existsSync(scoresFile)) {
+  try {
+    fs.writeFileSync(scoresFile, JSON.stringify([]));
+  } catch (err) {
+    console.error(`Error creating scores file (${scoresFile}):`, err.code || err);
+    console.error('Hint: ensure the mounted data dir is writable by uid 1000 (e.g. chown -R 1000:1000 <host dataset path>)');
+    scoresWritable = false;
+  }
 }
 
 // Helper to read scores safely
