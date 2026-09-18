@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Microslop Minesweeper</title>
+  <title>Slopsweeper</title>
   <link rel="stylesheet" href="themes/classic-light.css?v=1" />
   <link rel="stylesheet" href="themes/classic-dark.css?v=1" />
   <link rel="stylesheet" href="themes/litterbox.css?v=1" />
@@ -24,7 +24,7 @@
   <div class="desktop">
     <div class="window main-window">
       <div class="title-bar">
-        <span class="title-bar-text" id="board-title"><span class="ticon" data-icon="bomb" aria-hidden="true"></span> <span id="board-title-text">Microslop Minesweeper</span></span>
+        <span class="title-bar-text" id="board-title"><span class="ticon" data-icon="bomb" aria-hidden="true"></span> <span id="board-title-text">Slopsweeper</span></span>
         <div class="title-bar-controls menu-anchor">
           <button id="menu-toggle" class="win98-title-btn" title="Menu" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false"><span class="css-icon icon-menu" aria-hidden="true"><i></i><i></i><i></i></span></button>
           <div id="popup-menu" class="popup-menu hidden" role="menu">
@@ -32,6 +32,7 @@
             <button class="popup-item" role="menuitem" data-act="host">Host a Game</button>
             <button class="popup-item" role="menuitem" data-act="join">Join a Game</button>
             <button class="popup-item" role="menuitem" data-act="settings">Settings</button>
+            <button class="popup-item" role="menuitem" data-act="about">About</button>
           </div>
         </div>
       </div>
@@ -251,6 +252,37 @@
           <div class="button-row dlg-buttons">
             <button id="settings-ok" class="win98-btn default-btn">OK</button>
             <button id="settings-cancel" class="win98-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="about-modal" class="modal hidden">
+    <div class="window modal-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="person" aria-hidden="true"></span> About</span>
+        <div class="title-bar-controls">
+          <button id="about-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-content about-content">
+          <h2 class="about-title">Slopsweeper</h2>
+          <p class="about-version">Version 1.2.2</p>
+          <p class="about-text">A classic minesweeper clone with a Win98 aesthetic, built as a free and open-source project.</p>
+          <fieldset class="groupbox">
+            <legend>Fonts</legend>
+            <p class="about-text"><strong>Press Start 2P</strong> — <a href="https://fonts.google.com/specimen/Press+Start+2P" target="_blank" rel="noopener">Google Fonts</a> — licensed under the <a href="https://scripts.sil.org/OFL" target="_blank" rel="noopener">SIL Open Font License 1.1</a></p>
+            <p class="about-text"><strong>Noto Color Emoji</strong> — <a href="https://fonts.google.com/noto/specimen/Noto+Color+Emoji" target="_blank" rel="noopener">Google Fonts</a> — licensed under the <a href="https://scripts.sil.org/OFL" target="_blank" rel="noopener">SIL Open Font License 1.1</a></p>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Disclaimer</legend>
+            <p class="about-text">This software is provided "as is", without warranty of any kind. The authors and contributors are not responsible for any damages arising from the use of this software. This project is not affiliated with Microsoft Corporation. "Slopsweeper" is a parody name used for humorous purposes only.</p>
+          </fieldset>
+          <p class="about-text about-footer">Licensed under the ISC License. Source code available on GitHub.</p>
+          <div class="button-row dlg-buttons">
+            <button id="about-ok" class="win98-btn default-btn">OK</button>
           </div>
         </div>
       </div>

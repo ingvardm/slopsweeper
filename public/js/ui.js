@@ -227,6 +227,8 @@ function menuAction(act) {
     else mpLocalName = name;
     if (act === 'host') mpDoHost();
     else mpDoJoin();
+  } else if (act === 'about') {
+    openAbout();
   }
 }
 
@@ -332,6 +334,25 @@ function closeSettings() {
   const $m = document.getElementById('settings-modal');
   if ($m) $m.classList.add('hidden');
 }
+
+function openAbout() {
+  const $m = document.getElementById('about-modal');
+  if ($m) $m.classList.remove('hidden');
+}
+
+function closeAbout() {
+  const $m = document.getElementById('about-modal');
+  if ($m) $m.classList.add('hidden');
+}
+
+const $aboutClose = document.getElementById('about-close');
+const $aboutOk = document.getElementById('about-ok');
+if ($aboutClose) $aboutClose.addEventListener('click', closeAbout);
+if ($aboutOk) $aboutOk.addEventListener('click', closeAbout);
+const $aboutModal = document.getElementById('about-modal');
+if ($aboutModal) $aboutModal.addEventListener('click', (e) => {
+  if (e.target === $aboutModal) closeAbout();
+});
 
 const $setNormal = document.getElementById('settings-size-normal');
 const $setLarge = document.getElementById('settings-size-large');
@@ -466,6 +487,6 @@ document.addEventListener('keydown', (e) => {
     $leaderboardModal.classList.add('hidden');
     closeMenu();
     closeSettings();
-    closeNamePrompt();
+    closeAbout();
   }
 });

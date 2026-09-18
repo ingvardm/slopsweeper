@@ -770,7 +770,7 @@ function mpHideResult() {
 
 function mpUpdateHud() {
   // Matchup lives in the window title bar (icon is a pure-CSS theme glyph):
-  // "Microslop Minesweeper - ALI VS BOB" (solo: plain title).
+  // "Slopsweeper - ALI VS BOB" (solo: plain title).
   const solo = !mpIsMultiplayer();
   // The face button starts an unsynced local board, which breaks match
   // state — disable it in multiplayer, re-enable in solo.
@@ -781,8 +781,8 @@ function mpUpdateHud() {
   const $title = document.getElementById('board-title-text');
   if (!$title) return;
   $title.textContent = solo
-    ? 'Microslop Minesweeper'
-    : `Microslop Minesweeper - ${mpLocalName || 'You'} VS ${mpRemoteName || '…'}`;
+    ? 'Slopsweeper'
+    : `Slopsweeper - ${mpLocalName || 'You'} VS ${mpRemoteName || '…'}`;
 }
 
 function mpWireUI() {
