@@ -76,26 +76,16 @@ the entrypoint then chowns `/app/data` to `node` and drops privileges itself.
 
 ### Push to a registry
 
-```bash
-# Docker Hub (replace ingvardm with your username)
-docker tag slopsweeper:latest ingvardm/slopsweeper:1.0.2
-docker tag slopsweeper:latest ingvardm/slopsweeper:latest
-docker login
-docker push ingvardm/slopsweeper:1.0.2
-docker push ingvardm/slopsweeper:latest
+For future pushes, use this command:
 
-# GitHub Container Registry
-docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:1.0.2
-docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:latest
-echo "$CR_PAT" | docker login ghcr.io -u ingvardm --password-stdin
-docker push ghcr.io/ingvardm/slopsweeper:1.0.2
-docker push ghcr.io/ingvardm/slopsweeper:latest
+```bash
+docker buildx build --push --platform linux/amd64,linux/arm64 -t ingvardm/minesweeper:VERSION -t ingvardm/minesweeper:latest .
 ```
 
 Pull/run anywhere with Docker:
 
 ```bash
-docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data ingvardm/slopsweeper:latest
+docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data ingvardm/minesweeper:latest
 ```
 
 ## Development Notes
