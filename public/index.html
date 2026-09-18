@@ -93,60 +93,54 @@
     </div>
   </div>
 
-  <div id="net-modal" class="modal hidden">
+  <div id="host-modal" class="modal hidden">
     <div class="window modal-window net-window">
       <div class="title-bar">
-        <span id="net-title" class="title-bar-text"><span class="ticon" data-icon="antenna" aria-hidden="true"></span> <span id="net-title-text">Host game</span></span>
+        <span class="title-bar-text"><span class="ticon" data-icon="antenna" aria-hidden="true"></span> Host game</span>
         <div class="title-bar-controls">
-          <button id="btn-net-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+          <button id="btn-host-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
         </div>
       </div>
       <div class="window-body">
         <div class="modal-content net-content">
-          <div id="host-pane">
-            <fieldset class="groupbox">
-              <legend>Game</legend>
-              <div class="dlg-row game-code-row">
-                <span class="dlg-label">Game code:</span>
-                <strong id="host-code" class="game-code">…</strong>
-              </div>
-              <div id="net-seed-row" class="dlg-row seed-row">
-                <span class="dlg-label">Board seed:</span>
-                <strong id="net-seed-value" class="mono">…</strong>
-              </div>
-              <p class="dlg-hint">Waiting for an opponent to join from the game list…</p>
-            </fieldset>
-            <fieldset class="groupbox">
-              <legend>Status</legend>
-              <ol id="host-steps" class="steps hidden">
-                <li>Game hosted</li>
-                <li>Opponent joined</li>
-                <li>Connected</li>
-              </ol>
-              <p id="host-status" class="net-status status-line">…</p>
-            </fieldset>
-          </div>
-          <div id="join-pane" class="hidden">
-            <fieldset class="groupbox">
-              <legend>Available games</legend>
-              <div class="dlg-row list-toolbar">
-                <span class="dlg-hint">Pick a hosted game:</span>
-                <button id="btn-refresh-games" class="win98-btn small-btn">Refresh list</button>
-              </div>
-              <ul id="games-list" class="games-list"></ul>
-              <ol id="join-steps" class="steps hidden">
-                <li>Offer received</li>
-                <li>Answer sent</li>
-                <li>Connected</li>
-              </ol>
-            </fieldset>
-            <fieldset class="groupbox">
-              <legend>Status</legend>
-              <p id="join-status" class="net-status status-line">…</p>
-            </fieldset>
-          </div>
+          <fieldset class="groupbox">
+            <legend>Game</legend>
+            <div class="dlg-row game-code-row">
+              <span class="dlg-label">Game code:</span>
+              <strong id="host-code" class="game-code">…</strong>
+            </div>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Status</legend>
+            <p id="host-status" class="net-status status-line">…</p>
+          </fieldset>
           <div class="button-row dlg-buttons">
-            <button id="btn-net-cancel" class="win98-btn">Cancel</button>
+            <button id="btn-host-cancel" class="win98-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="join-modal" class="modal hidden">
+    <div class="window modal-window net-window">
+      <div class="title-bar">
+        <span class="title-bar-text"><span class="ticon" data-icon="antenna" aria-hidden="true"></span> Join game</span>
+        <div class="title-bar-controls">
+          <button id="btn-join-close" class="win98-title-btn" aria-label="Close"><span class="css-icon icon-close" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-content net-content">
+          <fieldset class="groupbox">
+            <legend>Available games</legend>
+            <div class="dlg-row list-toolbar">
+              <button id="btn-refresh-games" class="win98-btn small-btn">Refresh list</button>
+            </div>
+            <ul id="games-list" class="games-list"></ul>
+          </fieldset>
+          <div class="button-row dlg-buttons">
+            <button id="btn-join-cancel" class="win98-btn">Cancel</button>
           </div>
         </div>
       </div>

@@ -668,8 +668,8 @@ async function mpLeaveLobby() {
 // ---- UI wiring ----
 
 function mpSetNetStatus(text) {
-  const els = [document.getElementById('host-status'), document.getElementById('join-status')];
-  els.forEach((el) => { if (el) el.textContent = text; });
+  const el = document.getElementById('host-status');
+  if (el) el.textContent = text;
 }
 
 // Stepper: marks the first `done` items and highlights the next as active.
@@ -694,21 +694,17 @@ function mpResetSteps() {
 }
 
 function mpShowPane(which) {
-  const $net = document.getElementById('net-modal');
-  const $host = document.getElementById('host-pane');
-  const $join = document.getElementById('join-pane');
+  const $host = document.getElementById('host-modal');
+  const $join = document.getElementById('join-modal');
   if ($host) $host.classList.toggle('hidden', which !== 'host');
   if ($join) $join.classList.toggle('hidden', which !== 'join');
-  if ($net) $net.classList.remove('hidden');
-  const $title = document.getElementById('net-title-text');
-  if ($title) $title.textContent = which === 'host' ? 'Host game' : 'Join game';
-  const $seedRow = document.getElementById('net-seed-row');
-  if ($seedRow) $seedRow.style.display = which === 'host' ? '' : 'none';
 }
 
 function mpHideNetModal() {
-  const $net = document.getElementById('net-modal');
-  if ($net) $net.classList.add('hidden');
+  const $host = document.getElementById('host-modal');
+  const $join = document.getElementById('join-modal');
+  if ($host) $host.classList.add('hidden');
+  if ($join) $join.classList.add('hidden');
   mpStopListRefresh();
 }
 
@@ -735,15 +731,17 @@ function mpUpdateHud() {
 }
 
 function mpWireUI() {
-  const $cancel = document.getElementById('btn-net-cancel');
-  const $close = document.getElementById('btn-net-close');
+  const $hostCancel = document.getElementById('btn-host-cancel');
+  const $hostClose = document.getElementById('btn-host-close');
+  const $joinCancel = document.getElementById('btn-join-cancel');
+  const $joinClose = document.getElementById('btn-join-close');
   const $refresh = document.getElementById('btn-refresh-games');
   const $resultOk = document.getElementById('mp-result-ok');
 
   // Another tab started/stopped hosting: refresh the list immediately.
   window.addEventListener('storage', (e) => {
     if (e.key === HOSTING_GAME_KEY) {
-      const $join = document.getElementById('join-pane');
+      const $join = document.getElementById('join-modal');
       if ($join && !$join.classList.contains('hidden') && !mpJoiningId) {
         mpRefreshGamesList();
       }
@@ -761,8 +759,10 @@ function mpWireUI() {
     mpHideNetModal();
     mpUpdateHud();
   };
-  if ($cancel) $cancel.addEventListener('click', netCancel);
-  if ($close) $close.addEventListener('click', netCancel);
+  if ($hostCancel) $hostCancel.addEventListener('click', netCancel);
+  if ($hostClose) $hostClose.addEventListener('click', netCancel);
+  if ($joinCancel) $joinCancel.addEventListener('click', netCancel);
+  if ($joinClose) $joinClose.addEventListener('click', netCancel);
 
   if ($resultOk) $resultOk.addEventListener('click', () => {
     // Rematch on a fresh seed dealt to both peers (see mpRequestRematch).
