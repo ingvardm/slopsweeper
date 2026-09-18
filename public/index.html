@@ -221,13 +221,24 @@
           </fieldset>
           <fieldset class="groupbox">
             <legend>Gameplay</legend>
-            <label class="settings-check" title="Right-click cycle includes a question mark">
+            <label class="settings-check" title="Touch-friendly mode: tap always chords, long-press flags">
+              <input type="checkbox" id="ctl-ipad-mode" /> <span>iPad mode</span>
+            </label>
+            <div class="dlg-row ipad-only">
+              <label class="dlg-label" for="ctl-ipad-longpress">Long press:</label>
+              <select id="ctl-ipad-longpress" class="theme-select">
+                <option value="fast">Fast (200 ms)</option>
+                <option value="medium">Medium (300 ms)</option>
+                <option value="slow">Slow (450 ms)</option>
+              </select>
+            </div>
+            <label class="settings-check gameplay-opt" title="Right-click cycle includes a question mark">
               <input type="checkbox" id="ctl-use-question" /> <span>Use ?</span>
             </label>
-            <label class="settings-check" title="Left-click on a revealed number chords instead of previewing">
+            <label class="settings-check gameplay-opt" title="Left-click on a revealed number chords instead of previewing">
               <input type="checkbox" id="ctl-left-chord" /> <span>Left click chording</span>
             </label>
-            <label class="settings-check" title="Pressing left and right buttons together on a revealed number chords">
+            <label class="settings-check gameplay-opt" title="Pressing left and right buttons together on a revealed number chords">
               <input type="checkbox" id="ctl-emulate-middle" /> <span>Emulate middle button</span>
             </label>
           </fieldset>

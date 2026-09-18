@@ -2,12 +2,17 @@
 // so every deviation from it lives here). Persisted in localStorage.
 // Plain scripts share these via the global scope – load after state.js.
 //
+// - iPadMode: touch-optimised scheme — single tap always chords, long-press
+//   flags, "?" is disabled, and the other gameplay options are overridden.
+// - iPadLongPress: long-press duration in iPad mode ('fast'=200, 'medium'=300, 'slow'=450)
 // - useQuestion: right-click cycle includes "?" (unmarked -> flag -> ? -> unmarked)
 // - leftChord: left-click on a revealed number chords (otherwise it previews)
 // - emulateMiddle: pressing left+right together on a revealed number chords
 // - keyLeft/keyRight/keyMiddle: single-char shortcuts acting on the last hovered cell
 const CONTROLS_KEY = 'slopsweeper.controls';
 const DEFAULT_CONTROLS = {
+  iPadMode: false,
+  iPadLongPress: 'medium',
   useQuestion: true,
   leftChord: false,
   emulateMiddle: true,
@@ -27,7 +32,10 @@ function sanitizeControlKey(v, fallback) {
 
 function sanitizeControls(raw) {
   const src = (raw && typeof raw === 'object') ? raw : {};
+  const longPressValues = ['fast', 'medium', 'slow'];
   return {
+    iPadMode: typeof src.iPadMode === 'boolean' ? src.iPadMode : DEFAULT_CONTROLS.iPadMode,
+    iPadLongPress: longPressValues.includes(src.iPadLongPress) ? src.iPadLongPress : DEFAULT_CONTROLS.iPadLongPress,
     useQuestion: typeof src.useQuestion === 'boolean' ? src.useQuestion : DEFAULT_CONTROLS.useQuestion,
     leftChord: typeof src.leftChord === 'boolean' ? src.leftChord : DEFAULT_CONTROLS.leftChord,
     emulateMiddle: typeof src.emulateMiddle === 'boolean' ? src.emulateMiddle : DEFAULT_CONTROLS.emulateMiddle,

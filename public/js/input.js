@@ -8,6 +8,11 @@
 // - Middle click, or left+right together ("Emulate middle button"), on a
 //   revealed number chords.
 // - Keyboard shortcuts act on the last hovered cell.
+//
+// iPad mode (Settings -> Gameplay -> iPad mode):
+// - Touch tap always chords on revealed numbers, reveals unrevealed cells.
+// - Long-press (500 ms) flags/unflags an unrevealed cell.
+// - "?" placement is disabled; the other gameplay options are overridden.
 
 // Suppress the click/contextmenu that the browser fires after a
 // both-buttons (emulated middle) chord already acted.
@@ -40,9 +45,11 @@ function doLeftAction(r, c) {
     firstClick = false;
   }
   if (cell.revealed) {
-    // Revealed number: chord only when enabled, otherwise the press
-    // preview (shown on mousedown) is all that happens.
-    if (cell.adjacent > 0 && getControls().leftChord) chordCell(r, c);
+    if (cell.adjacent > 0 && (getControls().leftChord || getControls().iPadMode)) chordCell(r, c);
+    return;
+  }
+  if (getControls().iPadMode && cell.flagged) {
+    toggleFlagOnCell(r, c);
     return;
   }
   revealCell(r, c);
@@ -75,6 +82,10 @@ function onCellRightClick(e) {
   if (!pos || gameEnded) return;
   const cell = grid[pos.r][pos.c];
   if (cell.revealed) return;
+  if (getControls().iPadMode) {
+    toggleFlagOnCell(pos.r, pos.c);
+    return;
+  }
   const useQuestion = getControls().useQuestion;
   const cellEl = $grid.children[pos.r * COLS + pos.c];
   if (!cell.flagged && !cell.question) {
@@ -116,6 +127,99 @@ function onCellDoubleClick(e) {
   } else {
     revealCell(pos.r, pos.c);
   }
+}
+
+// Toggle flag on a cell (iPad mode long-press + keyboard shortcut).
+// Only cycles flag on/off — no "?" in iPad mode.
+function toggleFlagOnCell(r, c) {
+  if (gameEnded) return;
+  const cell = grid[r][c];
+  if (cell.revealed) return;
+  const cellEl = $grid.children[r * COLS + c];
+  if (cell.flagged) {
+    cell.flagged = false;
+    cellEl.textContent = '';
+    delete cellEl.dataset.glyph;
+    cellEl.classList.remove('flagged');
+    flagsLeft++;
+  } else {
+    cell.flagged = true;
+    cellEl.textContent = '';
+    cellEl.dataset.glyph = 'flag';
+    cellEl.classList.add('flagged');
+    flagsLeft--;
+  }
+  setMinesLeft(flagsLeft);
+}
+
+// ---- iPad mode: touch long-press flags, tap chords ----
+let touchStartXY = null;
+let longPressTimer = null;
+let longPressFired = false;
+
+const IPAD_LONG_PRESS_MS = { fast: 200, medium: 300, slow: 450 };
+
+function onGridTouchStart(e) {
+  if (!getControls().iPadMode || gameEnded) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (!target) return;
+  const pos = parseCellTarget({ target });
+  if (!pos) return;
+  touchStartXY = { x: touch.clientX, y: touch.clientY };
+  longPressFired = false;
+  const ms = IPAD_LONG_PRESS_MS[getControls().iPadLongPress] || 300;
+  longPressTimer = setTimeout(() => {
+    longPressTimer = null;
+    if (touchStartXY) {
+      longPressFired = true;
+      toggleFlagOnCell(pos.r, pos.c);
+    }
+  }, ms);
+}
+
+function onGridTouchMove(e) {
+  if (!touchStartXY) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchStartXY.x;
+  const dy = touch.clientY - touchStartXY.y;
+  if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    } else if (longPressFired) {
+      longPressFired = false;
+      const target = document.elementFromPoint(touchStartXY.x, touchStartXY.y);
+      if (target) {
+        const pos = parseCellTarget({ target });
+        if (pos) toggleFlagOnCell(pos.r, pos.c);
+      }
+    }
+    touchStartXY = null;
+  }
+}
+
+function onGridTouchEnd(e) {
+  if (!getControls().iPadMode) return;
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  if (longPressFired) {
+    longPressFired = false;
+    e.preventDefault();
+    return;
+  }
+  if (touchStartXY && !gameEnded) {
+    const touch = e.changedTouches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (target) {
+      const pos = parseCellTarget({ target });
+      if (pos) doLeftAction(pos.r, pos.c);
+    }
+  }
+  touchStartXY = null;
 }
 
 // Press preview: while the left button is held on a revealed number, the
@@ -160,7 +264,7 @@ function onGridMouseDown(e) {
     downButtons = 0;
     return;
   }
-  if (e.button === 0 && !getControls().leftChord && isNumberedOpen(pos.r, pos.c)) {
+  if (e.button === 0 && !getControls().leftChord && !getControls().iPadMode && isNumberedOpen(pos.r, pos.c)) {
     showPressPreview(pos.r, pos.c);
   }
 }
@@ -170,6 +274,12 @@ if ($grid) {
   $grid.addEventListener('mouseleave', () => {
     downButtons = 0;
     clearPressPreview();
+  });
+  $grid.addEventListener('touchstart', onGridTouchStart, { passive: false });
+  $grid.addEventListener('touchmove', onGridTouchMove, { passive: true });
+  $grid.addEventListener('touchend', onGridTouchEnd, { passive: false });
+  $grid.addEventListener('contextmenu', (e) => {
+    if (getControls().iPadMode) e.preventDefault();
   });
 }
 
