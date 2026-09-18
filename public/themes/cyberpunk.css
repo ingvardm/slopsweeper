@@ -1,0 +1,76 @@
+/* Cyberpunk theme — neon-dark theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="cyberpunk"] {
+  /* ---- colors (neon cyan + magenta on near-black) ---- */
+  --desktop-bg: #0a0a12;
+  --win-face: #1a1a2e;
+  --win-highlight: #3a3a5e;
+  --win-light: #2a2a4e;
+  --win-shadow: #0c0c18;
+  --win-dark: #000000;
+  --title-gradient-a: #10082e;
+  --title-gradient-b: #e010a0;
+  --title-text: #00ffea;
+  --cell-face: #222244;
+  --cell-revealed: #14142a;
+  --counter-bg: #06060e;
+  --counter-fg: #00ffea;
+  --text-color: #c8c8e8;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #c8c8e8;
+  --button-text: #c8c8e8;
+  --popup-text: #c8c8e8;
+  --modal-text: #c8c8e8;
+  --muted-text: #6868a0;
+  --inset-bg: #0c0c18;
+  --inset-text: #c8c8e8;
+  --cell-bevel-extra: #10102a;
+  --check-color: #00ffea;
+  --flag-color: #ff2080;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #00c8ff;
+  --num-2: #00ff88;
+  --num-3: #ff2080;
+  --num-4: #c850ff;
+  --num-5: #ff8800;
+  --num-6: #00ffea;
+  --num-7: #a0a0d0;
+  --num-8: #6868a0;
+  --num-default: #a0a0d0;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (cyberpunk set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "⚡";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

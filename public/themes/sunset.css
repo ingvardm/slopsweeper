@@ -1,0 +1,76 @@
+/* Sunset theme — warm dark theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="sunset"] {
+  /* ---- colors (warm orange/red) ---- */
+  --desktop-bg: #1a0e08;
+  --win-face: #4a2a18;
+  --win-highlight: #7a4a2a;
+  --win-light: #623a20;
+  --win-shadow: #1e0e06;
+  --win-dark: #000000;
+  --title-gradient-a: #2e1408;
+  --title-gradient-b: #c05020;
+  --title-text: #ffe0b0;
+  --cell-face: #5c3420;
+  --cell-revealed: #382010;
+  --counter-bg: #120804;
+  --counter-fg: #ff8c42;
+  --text-color: #e8c0a0;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #e8c0a0;
+  --button-text: #e8c0a0;
+  --popup-text: #e8c0a0;
+  --modal-text: #e8c0a0;
+  --muted-text: #8a6a50;
+  --inset-bg: #1e0e06;
+  --inset-text: #e8c0a0;
+  --cell-bevel-extra: #201008;
+  --check-color: #6fd66f;
+  --flag-color: #ff6040;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #6fb8ff;
+  --num-2: #6fd66f;
+  --num-3: #ff6b5e;
+  --num-4: #d0a0ff;
+  --num-5: #ffb060;
+  --num-6: #60d6d6;
+  --num-7: #c0a080;
+  --num-8: #8a7a6a;
+  --num-default: #c0a080;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (sunset set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "🔥";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

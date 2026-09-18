@@ -1,0 +1,76 @@
+/* Forest theme — pastel woodland light theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="forest"] {
+  /* ---- colors (pastel green + moss) ---- */
+  --desktop-bg: #6a9a60;
+  --win-face: #d8f0d0;
+  --win-highlight: #f0fff8;
+  --win-light: #e0f4d8;
+  --win-shadow: #a0c898;
+  --win-dark: #4a6a42;
+  --title-gradient-a: #5a8a50;
+  --title-gradient-b: #80b870;
+  --title-text: #ffffff;
+  --cell-face: #c0e4b8;
+  --cell-revealed: #e8f4e0;
+  --counter-bg: #2a4a22;
+  --counter-fg: #66cc44;
+  --text-color: #2a4a22;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #2a4a22;
+  --button-text: #2a4a22;
+  --popup-text: #2a4a22;
+  --modal-text: #2a4a22;
+  --muted-text: #6a9a60;
+  --inset-bg: #f0fff8;
+  --inset-text: #2a4a22;
+  --cell-bevel-extra: #90b888;
+  --check-color: #308040;
+  --flag-color: #c06030;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #4090e0;
+  --num-2: #308040;
+  --num-3: #c06030;
+  --num-4: #7050a0;
+  --num-5: #905020;
+  --num-6: #208888;
+  --num-7: #4a6a42;
+  --num-8: #809878;
+  --num-default: #4a6a42;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (forest set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "🌲";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

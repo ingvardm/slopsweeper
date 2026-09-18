@@ -1,0 +1,76 @@
+/* Candy theme — playful pastel light theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="candy"] {
+  /* ---- colors (pastel pink/lavender/mint) ---- */
+  --desktop-bg: #c8a0d8;
+  --win-face: #f8e8f8;
+  --win-highlight: #ffffff;
+  --win-light: #f0e0f4;
+  --win-shadow: #c8a8c8;
+  --win-dark: #705080;
+  --title-gradient-a: #d888d8;
+  --title-gradient-b: #f8a8e0;
+  --title-text: #ffffff;
+  --cell-face: #f0d8f0;
+  --cell-revealed: #e8d0e8;
+  --counter-bg: #402048;
+  --counter-fg: #ff60a0;
+  --text-color: #5a3068;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #5a3068;
+  --button-text: #5a3068;
+  --popup-text: #5a3068;
+  --modal-text: #5a3068;
+  --muted-text: #9878a8;
+  --inset-bg: #ffffff;
+  --inset-text: #5a3068;
+  --cell-bevel-extra: #c8a0c8;
+  --check-color: #40a060;
+  --flag-color: #e04080;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #4090e0;
+  --num-2: #40a060;
+  --num-3: #e04080;
+  --num-4: #9050c0;
+  --num-5: #c07020;
+  --num-6: #20a0a0;
+  --num-7: #5a3068;
+  --num-8: #9878a8;
+  --num-default: #5a3068;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (candy set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "🍭";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}

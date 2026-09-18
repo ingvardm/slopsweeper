@@ -1,0 +1,76 @@
+/* Mono theme — monochrome light theme.
+ *
+ * Same contract as the classic themes: colors + font configuration + glyphs,
+ * consumed by the engine (style.css) via variables. JS only switches
+ * `document.documentElement.dataset.theme`.
+ */
+
+:root[data-theme="mono"] {
+  /* ---- colors (pure black/white/gray) ---- */
+  --desktop-bg: #808080;
+  --win-face: #c0c0c0;
+  --win-highlight: #ffffff;
+  --win-light: #dfdfdf;
+  --win-shadow: #808080;
+  --win-dark: #000000;
+  --title-gradient-a: #000000;
+  --title-gradient-b: #3a3a3a;
+  --title-text: #ffffff;
+  --cell-face: #a0a0a0;
+  --cell-revealed: #d8d8d8;
+  --counter-bg: #000000;
+  --counter-fg: #ffffff;
+  --text-color: #000000;
+
+  /* Semantic surface colors so style.css needs no theme selectors. */
+  --window-text: #000000;
+  --button-text: #000000;
+  --popup-text: #000000;
+  --modal-text: #000000;
+  --muted-text: #606060;
+  --inset-bg: #ffffff;
+  --inset-text: #000000;
+  --cell-bevel-extra: #707070;
+  --check-color: #000000;
+  --flag-color: #404040;
+
+  /* Board number colors (pure CSS: .cell[data-num] consumes these). */
+  --num-1: #0000cc;
+  --num-2: #008000;
+  --num-3: #cc0000;
+  --num-4: #660099;
+  --num-5: #800000;
+  --num-6: #008080;
+  --num-7: #333333;
+  --num-8: #666666;
+  --num-default: #333333;
+
+  /* ---- font configuration ---- */
+  --font-ui: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --font-counter: "Press Start 2P", ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  --font-cell: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-emoji: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+
+  /* ---- glyphs (standard set) ---- */
+  --glyph-face-smile: "🙂";
+  --glyph-face-won: "😎";
+  --glyph-face-lost: "😵";
+  --glyph-face-suspense: "😮";
+  --glyph-flag: "🚩";
+  --glyph-question: "❓";
+  --glyph-explosion: "💥";
+  --glyph-bomb: "💣";
+  --glyph-wrong: "❌";
+  --glyph-trophy: "🏆";
+  --glyph-party: "🎉";
+  --glyph-antenna: "📡";
+  --glyph-person: "👤";
+  --glyph-gear: "⚙";
+  --glyph-race: "🏁";
+  --glyph-rank-1: "🥇 ";
+  --glyph-rank-2: "🥈 ";
+  --glyph-rank-3: "🥉 ";
+  --glyph-close: "✖";
+  --glyph-check: "✓";
+}
