@@ -227,6 +227,18 @@ app.delete('/api/games/:id', (req, res) => {
 });
 
 // Start the server
+const APP_VERSION = require('./package.json').version;
 app.listen(PORT, HOST, () => {
-  console.log(`Minesweeper server listening on http://${HOST}:${PORT}`);
+  let who = 'unknown';
+  try {
+    who = `uid=${process.getuid()} gid=${process.getgid()}`;
+  } catch {}
+  let scoresAccess = 'unknown';
+  try {
+    fs.accessSync(scoresFile, fs.constants.W_OK);
+    scoresAccess = 'writable';
+  } catch (err) {
+    scoresAccess = `NOT writable (${err.code || err})`;
+  }
+  console.log(`Minesweeper server v${APP_VERSION} listening on http://${HOST}:${PORT} (${who}, scoresFile=${scoresFile} ${scoresAccess})`);
 });

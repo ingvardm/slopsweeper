@@ -162,3 +162,25 @@ function checkVictory() {
     gameOver(true);
   }
 }
+
+// Test cheat (console only): reveal every safe cell and win automatically.
+// Disabled in multiplayer so match results stay legitimate. If the previous
+// game already ended, a fresh solo board is started first. Usage: _boom_()
+function _boom_() {
+  if (typeof mpIsMultiplayer === 'function' && mpIsMultiplayer()) {
+    console.warn('_boom_() is disabled in multiplayer');
+    return 'disabled in multiplayer';
+  }
+  if (gameEnded) initGrid();
+  if (firstClick) {
+    generateBoardSafe(0, 0);
+    startTimer();
+    firstClick = false;
+  }
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (!grid[r][c].mine && !grid[r][c].revealed) revealCell(r, c);
+    }
+  }
+  return 'boom';
+}

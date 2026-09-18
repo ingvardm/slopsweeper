@@ -51,21 +51,44 @@ open http://localhost:3000
 docker compose up --build -d
 ```
 
+### TrueNAS: EACCES on /app/data/scores.json
+
+With **host-path** storage plus a forced non-root run-as user (e.g. `568`),
+`POST /api/scores` fails with `EACCES`: the container never runs as root, so
+its boot-time ownership repair cannot run, and a root-owned dataset stays
+unwritable. Fix ownership on the host once (replace UID and path with yours):
+
+```bash
+# On the TrueNAS shell:
+sudo chown -R 568:568 /mnt/<pool>/slopsweeper-data
+```
+
+Image `1.0.2+` prints the exact UID at startup — look for these lines in the
+app log and match the dataset owner to the printed `uid`:
+
+```
+docker-entrypoint: uid=568 gid=568, SCORES_FILE=/app/data/scores.json
+Minesweeper server v1.0.2 listening on ... (uid=568 gid=568, scoresFile=/app/data/scores.json NOT writable (EACCES))
+```
+
+Alternative: remove the run-as override so the container starts as root —
+the entrypoint then chowns `/app/data` to `node` and drops privileges itself.
+
 ### Push to a registry
 
 ```bash
 # Docker Hub (replace ingvardm with your username)
-docker tag slopsweeper:latest ingvardm/slopsweeper:1.0.0
+docker tag slopsweeper:latest ingvardm/slopsweeper:1.0.2
 docker tag slopsweeper:latest ingvardm/slopsweeper:latest
 docker login
-docker push ingvardm/slopsweeper:1.0.0
+docker push ingvardm/slopsweeper:1.0.2
 docker push ingvardm/slopsweeper:latest
 
 # GitHub Container Registry
-docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:1.0.0
+docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:1.0.2
 docker tag slopsweeper:latest ghcr.io/ingvardm/slopsweeper:latest
 echo "$CR_PAT" | docker login ghcr.io -u ingvardm --password-stdin
-docker push ghcr.io/ingvardm/slopsweeper:1.0.0
+docker push ghcr.io/ingvardm/slopsweeper:1.0.2
 docker push ghcr.io/ingvardm/slopsweeper:latest
 ```
 
