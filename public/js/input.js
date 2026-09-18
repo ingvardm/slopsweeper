@@ -150,6 +150,23 @@ function toggleFlagOnCell(r, c) {
     flagsLeft--;
   }
   setMinesLeft(flagsLeft);
+  if (getControls().iPadMode) showFlagBubble(r, c, cell.flagged);
+}
+
+function showFlagBubble(r, c, activated) {
+  const cellEl = $grid.children[r * COLS + c];
+  const rect = cellEl.getBoundingClientRect();
+  const gridRect = $grid.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 4.8;
+  const bubble = document.createElement('div');
+  bubble.className = 'flag-bubble';
+  bubble.style.width = size + 'px';
+  bubble.style.height = size + 'px';
+  bubble.style.left = (rect.left - gridRect.left + rect.width / 2) + 'px';
+  bubble.style.top = (rect.top - gridRect.top + rect.height / 2) + 'px';
+  bubble.style.background = activated ? 'var(--check-color)' : 'var(--flag-color)';
+  $grid.appendChild(bubble);
+  bubble.addEventListener('animationend', () => bubble.remove());
 }
 
 // ---- iPad mode: touch long-press flags, tap chords ----

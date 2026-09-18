@@ -743,6 +743,8 @@ body {
   width: 100%;
   aspect-ratio: 30 / 16;
   touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
 }
 
 .cell {
@@ -1117,4 +1119,24 @@ body {
   .dlg-row { grid-template-columns: 72px minmax(0, 1fr) auto; }
   .keys-grid { grid-template-columns: 1fr; }
   .game-code { font-size: 17px; letter-spacing: 3px; }
+}
+
+/* iPad mode flag feedback bubble */
+.flag-bubble {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  animation: flag-bubble-pop 400ms ease-out forwards;
+}
+
+@keyframes flag-bubble-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
 }
