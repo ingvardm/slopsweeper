@@ -88,10 +88,11 @@ function onCellRightClick(e) {
   }
   const useQuestion = getControls().useQuestion;
   const cellEl = $grid.children[pos.r * COLS + pos.c];
+  const flagEl = cellEl.querySelector('.cell-flag');
+  const questionEl = cellEl.querySelector('.cell-question');
   if (!cell.flagged && !cell.question) {
     cell.flagged = true;
-    cellEl.textContent = '';
-    cellEl.dataset.glyph = 'flag';
+    if (flagEl) flagEl.classList.add('flagged');
     cellEl.classList.add('flagged');
     flagsLeft--;
   } else if (cell.flagged) {
@@ -99,19 +100,17 @@ function onCellRightClick(e) {
     flagsLeft++;
     if (useQuestion) {
       cell.question = true;
-      cellEl.textContent = '';
-      cellEl.dataset.glyph = 'question';
+      if (flagEl) flagEl.classList.remove('flagged');
       cellEl.classList.remove('flagged');
+      if (questionEl) questionEl.classList.add('questioned');
       cellEl.classList.add('questioned');
     } else {
-      cellEl.textContent = '';
-      delete cellEl.dataset.glyph;
+      if (flagEl) flagEl.classList.remove('flagged');
       cellEl.classList.remove('flagged');
     }
   } else {
     cell.question = false;
-    cellEl.textContent = '';
-    delete cellEl.dataset.glyph;
+    if (questionEl) questionEl.classList.remove('questioned');
     cellEl.classList.remove('questioned');
   }
   setMinesLeft(flagsLeft);
@@ -136,16 +135,15 @@ function toggleFlagOnCell(r, c) {
   const cell = grid[r][c];
   if (cell.revealed) return;
   const cellEl = $grid.children[r * COLS + c];
+  const flagEl = cellEl.querySelector('.cell-flag');
   if (cell.flagged) {
     cell.flagged = false;
-    cellEl.textContent = '';
-    delete cellEl.dataset.glyph;
+    if (flagEl) flagEl.classList.remove('flagged');
     cellEl.classList.remove('flagged');
     flagsLeft++;
   } else {
     cell.flagged = true;
-    cellEl.textContent = '';
-    cellEl.dataset.glyph = 'flag';
+    if (flagEl) flagEl.classList.add('flagged');
     cellEl.classList.add('flagged');
     flagsLeft--;
   }
@@ -153,20 +151,23 @@ function toggleFlagOnCell(r, c) {
   if (getControls().iPadMode) showFlagBubble(r, c, cell.flagged);
 }
 
+let flagBubbleId = 0;
+
 function showFlagBubble(r, c, activated) {
   const cellEl = $grid.children[r * COLS + c];
   const rect = cellEl.getBoundingClientRect();
   const gridRect = $grid.getBoundingClientRect();
   const size = Math.max(rect.width, rect.height) * 4.8;
+  const color = activated ? 'var(--check-color)' : 'var(--flag-color)';
+  const id = 'fbb' + (++flagBubbleId);
+  const style = document.createElement('style');
+  style.textContent = '@keyframes ' + id + '{0%{transform:translate(-50%,-50%) scale(0);opacity:.5}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}';
+  document.head.appendChild(style);
   const bubble = document.createElement('div');
   bubble.className = 'flag-bubble';
-  bubble.style.width = size + 'px';
-  bubble.style.height = size + 'px';
-  bubble.style.left = (rect.left - gridRect.left + rect.width / 2) + 'px';
-  bubble.style.top = (rect.top - gridRect.top + rect.height / 2) + 'px';
-  bubble.style.background = activated ? 'var(--check-color)' : 'var(--flag-color)';
+  bubble.style.cssText = 'position:absolute;border-radius:50%;pointer-events:none;z-index:10;width:' + size + 'px;height:' + size + 'px;left:' + (rect.left - gridRect.left + rect.width / 2) + 'px;top:' + (rect.top - gridRect.top + rect.height / 2) + 'px;background:' + color + ';animation:' + id + ' 400ms ease-out forwards';
   $grid.appendChild(bubble);
-  bubble.addEventListener('animationend', () => bubble.remove());
+  bubble.addEventListener('animationend', () => { bubble.remove(); style.remove(); });
 }
 
 // ---- iPad mode: touch long-press flags, tap chords ----

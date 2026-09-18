@@ -32,6 +32,12 @@ function chordCell(r, c) {
   });
 }
 
+function clearTextNodes(el) {
+  for (let i = el.childNodes.length - 1; i >= 0; i--) {
+    if (el.childNodes[i].nodeType === 3) el.childNodes[i].remove();
+  }
+}
+
 function revealCell(r, c) {
   const cell = grid[r][c];
   if (cell.revealed || cell.flagged) return;
@@ -42,9 +48,15 @@ function revealCell(r, c) {
   cellEl.classList.add('revealed');
   cellEl.classList.remove('questioned');
   cellEl.classList.remove('preview');
+  const questionEl = cellEl.querySelector('.cell-question');
+  if (questionEl) questionEl.classList.remove('questioned');
   delete cellEl.dataset.glyph;
   delete cellEl.dataset.num;
-  cellEl.textContent = '';
+  // Clear text nodes but preserve child elements (e.g. .cell-flag overlay)
+  for (let i = cellEl.childNodes.length - 1; i >= 0; i--) {
+    const n = cellEl.childNodes[i];
+    if (n.nodeType === 3) n.remove();
+  }
   if (cell.mine) {
     // Record the mine that caused the loss
     triggeredMine = { r, c };
@@ -53,7 +65,8 @@ function revealCell(r, c) {
     return;
   }
   if (cell.adjacent > 0) {
-    cellEl.textContent = cell.adjacent;
+    clearTextNodes(cellEl);
+    cellEl.appendChild(document.createTextNode(cell.adjacent));
     cellEl.dataset.num = String(cell.adjacent); // pure-CSS number color
   } else {
     // flood fill
@@ -87,39 +100,43 @@ function gameOver(won) {
         if (cell.mine) {
           if (cell.flagged) {
             // Correct flag on a mine – keep the flag visual
-            cellEl.dataset.glyph = 'flag'; // themed flag glyph
-            cellEl.textContent = '';
+            const flagEl = cellEl.querySelector('.cell-flag');
+            if (flagEl) flagEl.classList.add('flagged');
             cellEl.classList.add('flagged');
             // Do not reveal flagged mines on loss
           } else {
             // Unflagged mine – show bomb unless this is the triggered mine
-            // (a "?" mark is not a flag, so it is replaced by the bomb)
             cell.question = false;
+            const questionEl = cellEl.querySelector('.cell-question');
+            if (questionEl) questionEl.classList.remove('questioned');
             cellEl.classList.remove('questioned');
             delete cellEl.dataset.num;
-            cellEl.textContent = '';
+            clearTextNodes(cellEl);
             if (triggeredMine && triggeredMine.r === r && triggeredMine.c === c) {
-              cellEl.dataset.glyph = 'explosion'; // themed glyph for the mine that caused loss
+              const explosionEl = cellEl.querySelector('.cell-explosion');
+              if (explosionEl) explosionEl.classList.add('exploded');
+              cellEl.classList.add('exploded');
             } else {
               cellEl.dataset.glyph = 'bomb'; // themed glyph for other mines
             }
-            // Do not add 'revealed' class for mines on loss; keep them covered
           }
         } else {
           // Non-mine cell
           if (cell.flagged) {
             // Wrong flag – replace with themed wrong glyph
-            cell.flagged = false; // clear flag state
+            cell.flagged = false;
             delete cellEl.dataset.num;
-            cellEl.textContent = '';
-            cellEl.dataset.glyph = 'wrong';
+            const flagEl = cellEl.querySelector('.cell-flag');
+            if (flagEl) flagEl.classList.remove('flagged');
             cellEl.classList.remove('flagged');
+            cellEl.dataset.glyph = 'wrong';
             cellEl.classList.add('revealed');
           } else if (cell.question) {
             // "?" was only a reminder – clear it on game over
             cell.question = false;
-            cellEl.textContent = '';
-            delete cellEl.dataset.glyph;
+            clearTextNodes(cellEl);
+            const questionEl = cellEl.querySelector('.cell-question');
+            if (questionEl) questionEl.classList.remove('questioned');
             cellEl.classList.remove('questioned');
           }
         }

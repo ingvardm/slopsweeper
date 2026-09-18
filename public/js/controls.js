@@ -62,3 +62,8 @@ function setControls(patch) {
   } catch (e) {}
   return next;
 }
+
+function getThemeGlyph(name) {
+  const varMap = { flag: '--glyph-flag', question: '--glyph-question', explosion: '--glyph-explosion', bomb: '--glyph-bomb', wrong: '--glyph-wrong' };
+  return getComputedStyle(document.documentElement).getPropertyValue(varMap[name] || varMap.flag).trim().replace(/^"|"$/g, '');
+}

@@ -23,6 +23,18 @@ function initGrid() {
       cellEl.classList.add('cell');
       cellEl.dataset.r = r;
       cellEl.dataset.c = c;
+      const flagEl = document.createElement('span');
+      flagEl.classList.add('cell-flag');
+      flagEl.textContent = getThemeGlyph('flag');
+      cellEl.appendChild(flagEl);
+      const questionEl = document.createElement('span');
+      questionEl.classList.add('cell-question');
+      questionEl.textContent = getThemeGlyph('question');
+      cellEl.appendChild(questionEl);
+      const explosionEl = document.createElement('span');
+      explosionEl.classList.add('cell-explosion');
+      explosionEl.textContent = getThemeGlyph('explosion');
+      cellEl.appendChild(explosionEl);
       cellEl.addEventListener('click', onCellClick);
       cellEl.addEventListener('dblclick', e => {
         e.preventDefault();
