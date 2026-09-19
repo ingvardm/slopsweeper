@@ -200,7 +200,19 @@ function generateBoardSafe(excludeR, excludeC) {
     return; // board accepted
   }
 
-  // Fallback: compute adjacents for the last board, solvability not guaranteed.
+  // Fallback: try a few more attempts without the time budget
+  // to find a solvable board instead of using the last unsolvable one
+  for (let attempt = 0; attempt < 10; attempt++) {
+    placeMinesRandom(excludeR, excludeC);
+    computeAdjacents();
+    const opening = computeOpeningSet(excludeR, excludeC);
+    const size = openingSize(opening);
+    if (!openingInRange(size)) continue;
+    if (isSolvable(grid, excludeR, excludeC)) return;
+  }
+
+  // Last resort: keep the best board so far, but always ensure
+  // adjacents are computed so the board is internally consistent
   computeAdjacents();
   console.warn('No fully solvable board found; using last candidate.');
 }
