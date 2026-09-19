@@ -1,10 +1,7 @@
 // Board setup: empty-grid construction plus the no-guess board generator.
-// Mine placement uses a smooth value-noise density field (organic,
-// classic Windows-like feel) with local anti-clutter inhibition so mines
-// spread out instead of bunching. Candidates are validated with the solver
-// (solver.js) and must open 26-39 cells on first click (see config.js);
-// the repair step swaps mines locally along the solver's stuck frontier
-// while preserving that opening.
+// Mine placement uses uniform random sampling via Fisher-Yates shuffle,
+// excluding the first-click safety zone. Boards are validated for
+// opening size and solvability via the solver (solver.js).
 
 function initGrid() {
   grid = Array.from({ length: ROWS }, () =>
@@ -85,113 +82,29 @@ function inSafetyZone(r, c, excludeR, excludeC) {
   return Math.abs(r - excludeR) <= 1 && Math.abs(c - excludeC) <= 1;
 }
 
-// Seeded PRNG (mulberry32) so each placement attempt gets its own noise field.
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0;
-    a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// Smooth value-noise field over the board: a coarse random lattice (one value
-// per STEP cells) with bilinear smoothstep interpolation. Fresh lattice per
-// attempt via the passed rng, giving organic density variation like classic
-// Windows boards but without pure-random clumping.
-function makeMineNoise(rand) {
-  const STEP = 5;
-  const gw = Math.ceil(COLS / STEP) + 2;
-  const gh = Math.ceil(ROWS / STEP) + 2;
-  const lat = [];
-  for (let y = 0; y < gh; y++) {
-    lat.push([]);
-    for (let x = 0; x < gw; x++) lat[y].push(rand());
-  }
-  const smooth = function (t) { return t * t * (3 - 2 * t); };
-  return function (r, c) {
-    const x = c / STEP;
-    const y = r / STEP;
-    const x0 = Math.floor(x);
-    const y0 = Math.floor(y);
-    const fx = smooth(x - x0);
-    const fy = smooth(y - y0);
-    const a = lat[y0][x0];
-    const b = lat[y0][x0 + 1];
-    const d = lat[y0 + 1][x0];
-    const e = lat[y0 + 1][x0 + 1];
-    return a + (b - a) * fx + (d - a) * fy + (a - b - d + e) * fx * fy;
-  };
-}
-
-// Noise-modulated, decluttered placement: mines are drawn one at a time with
-// probability shaped by the noise field, while cells neighbouring already
-// placed mines are strongly down-weighted so mines spread out instead of
-// cluttering. The safety zone around the first click stays mine-free and the
-// exact MINES count is always placed.
-function placeMinesNoise(excludeR, excludeC, seed) {
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+// Fisher-Yates shuffle: produce a uniformly random permutation of candidates,
+// then place mines at the first MINES positions. Excludes the 3×3 safety
+// zone around the first click.
+function placeMinesRandom(excludeR, excludeC) {
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
       grid[r][c].mine = false;
-    }
+
+  const candidates = [];
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (!inSafetyZone(r, c, excludeR, excludeC))
+        candidates.push([r, c]);
+
+  // Fisher-Yates shuffle in place
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
   }
-  const rand = mulberry32(seed);
-  const noiseAt = makeMineNoise(rand);
-  const base = [];
-  const adjMines = [];
-  const weights = [];
-  for (let r = 0; r < ROWS; r++) {
-    base.push([]);
-    adjMines.push([]);
-    weights.push([]);
-    for (let c = 0; c < COLS; c++) {
-      base[r].push(0.3 + 0.7 * noiseAt(r, c));
-      adjMines[r].push(0);
-      weights[r].push(0);
-    }
-  }
-  const bump = function (r, c, d) {
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        const nr = r + dr;
-        const nc = c + dc;
-        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) adjMines[nr][nc] += d;
-      }
-    }
-  };
-  for (let placed = 0; placed < MINES; placed++) {
-    let total = 0;
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        if (grid[r][c].mine || inSafetyZone(r, c, excludeR, excludeC)) {
-          weights[r][c] = 0;
-          continue;
-        }
-        const w = base[r][c] / (1 + 1.2 * adjMines[r][c]);
-        weights[r][c] = w;
-        total += w;
-      }
-    }
-    if (total <= 0) break; // unreachable: far more eligible cells than mines
-    let pick = rand() * total;
-    let pr = 0;
-    let pc = 0;
-    outer:
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        pick -= weights[r][c];
-        if (pick <= 0) {
-          pr = r;
-          pc = c;
-          break outer;
-        }
-      }
-    }
-    grid[pr][pc].mine = true;
-    bump(pr, pc, 1);
+
+  for (let i = 0; i < MINES; i++) {
+    const [r, c] = candidates[i];
+    grid[r][c].mine = true;
   }
 }
 
@@ -258,144 +171,36 @@ function restoreMines(coords) {
 }
 
 /*
- * No-Guess Board Generator, Windows-style placement.
- * 1. Placement: noise-modulated density with anti-clutter inhibition and a
- *    fresh random seed per attempt. A candidate is INVALID unless the
- *    first-click opening holds OPENING_MIN_CELLS..OPENING_MAX_CELLS cells —
- *    invalid boards are discarded and placement retried (closest candidate
- *    kept as a fallback so generation always terminates quickly).
- * 2. Repair: while the logical solver is stuck, swap one mine between two
- *    frontier cells (covered cells touching a revealed number) so the fix
- *    stays local to the ambiguity. Moves preserve the validated opening
- *    exactly — sources that would zero an opening boundary number are
- *    skipped — and uniform picks preserve the placement's decluttered
- *    spread instead of piling mines into the opposite corner.
+ * No-Guess Board Generator.
+ * 1. Place mines uniformly at random via Fisher-Yates shuffle,
+ *    excluding the 3x3 safety zone around the first click.
+ * 2. Validate opening size (26-39 cells revealed on first click).
+ * 3. Validate solvability via the constraint-propagation solver.
+ * 4. Reject and regenerate if either check fails.
  */
-function generateBoardSafe(excludeR, excludeC, seed) {
-  const MAX_PLACEMENT_ATTEMPTS = 60;
-  const MAX_REPAIRS = 200;
+function generateBoardSafe(excludeR, excludeC) {
+  const MAX_ATTEMPTS = 60;
   const TIME_BUDGET_MS = 2500;
   const t0 = Date.now();
-  const seeded = Number.isInteger(seed);
-  // Deterministic RNG for seeded (multiplayer) boards so both peers build
-  // the identical mine layout from the shared seed. Unseeded solo boards
-  // keep the original Math.random() behaviour.
-  const seededRng = seeded ? mulberry32(seed >>> 0) : null;
-  const nextRandom = seededRng ? () => seededRng() : Math.random;
 
-  let bestMines = null;
-  let bestMiss = Infinity;
-  let placed = false;
-  for (let attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++) {
-    const attemptSeed = seeded
-      ? ((nextRandom() * 0x7fffffff) | 0)
-      : ((Math.random() * 0x7fffffff) | 0);
-    placeMinesNoise(excludeR, excludeC, attemptSeed);
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    placeMinesRandom(excludeR, excludeC);
     computeAdjacents();
-    const size = openingSize(computeOpeningSet(excludeR, excludeC));
-    if (openingInRange(size)) {
-      placed = true;
-      bestMines = null;
-      break;
-    }
-    const miss = size < OPENING_MIN_CELLS
-      ? OPENING_MIN_CELLS - size
-      : size - OPENING_MAX_CELLS;
-    if (miss < bestMiss) {
-      bestMiss = miss;
-      bestMines = snapshotMines();
-    }
-    if (!seeded && Date.now() - t0 > TIME_BUDGET_MS) break;
-  }
-  if (!placed) {
-    if (bestMines) restoreMines(bestMines);
-    computeAdjacents();
-    console.warn('No in-range first-click opening found; using closest candidate.');
+
+    const opening = computeOpeningSet(excludeR, excludeC);
+    const size = openingSize(opening);
+
+    // Opening must be large enough to give the player information
+    if (!openingInRange(size)) continue;
+
+    // Board must be solvable without guessing
+    if (Date.now() - t0 > TIME_BUDGET_MS) break;
+    if (!isSolvable(grid, excludeR, excludeC)) continue;
+
+    return; // board accepted
   }
 
-  // Opening set to preserve exactly through the repair step below.
-  const opening = computeOpeningSet(excludeR, excludeC);
-
-  for (let attempt = 0; attempt < MAX_REPAIRS; attempt++) {
-    const analysis = analyzeBoard(grid, excludeR, excludeC);
-    if (analysis.solved) {
-      return; // board accepted: fully deducible without guessing
-    }
-    if (!seeded && Date.now() - t0 > TIME_BUDGET_MS) break;
-
-    // Repair: swap one mine between two *frontier* cells (covered cells
-    // touching a revealed number) so the fix stays local to where the
-    // solver is stuck. Moving mines between arbitrary covered cells with a
-    // low-adjacent destination bias drained mines away from the frontier
-    // and piled them up in the opposite corner from the first click, so
-    // both pools are frontier-restricted (with a global uniform fallback
-    // for the rare empty-frontier iteration). Sources exclude the safety
-    // zone; destinations must also avoid it.
-    const revealed = analysis.revealed;
-    const isFrontier = function (r, c) {
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const nr = r + dr;
-          const nc = c + dc;
-          if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-          if (revealed[nr][nc] && grid[nr][nc].adjacent > 0) return true;
-        }
-      }
-      return false;
-    };
-    const sources = [];
-    const destinations = [];
-    const fallbackSources = [];
-    const fallbackDestinations = [];
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        if (revealed[r][c]) continue;
-        if (inSafetyZone(r, c, excludeR, excludeC)) continue;
-        if (grid[r][c].mine) {
-          // Skip sources whose removal would zero an opening boundary
-          // number (that would grow the validated opening).
-          let zeroesOpening = false;
-          for (let dr = -1; dr <= 1 && !zeroesOpening; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-              if (dr === 0 && dc === 0) continue;
-              const nr = r + dr;
-              const nc = c + dc;
-              if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-              if (opening[nr][nc] && !grid[nr][nc].mine && grid[nr][nc].adjacent === 1) {
-                zeroesOpening = true;
-                break;
-              }
-            }
-          }
-          if (!zeroesOpening) {
-            fallbackSources.push({ r, c });
-            if (isFrontier(r, c)) sources.push({ r, c });
-          }
-        } else {
-          fallbackDestinations.push({ r, c });
-          if (isFrontier(r, c)) destinations.push({ r, c });
-        }
-      }
-    }
-    // Prefer local frontier swaps; fall back to the global covered pools
-    // (uniform pick, no drift) only when the frontier has no eligible mine
-    // or no free cell.
-    const srcPool = sources.length > 0 ? sources : fallbackSources;
-    const dstPool = destinations.length > 0 ? destinations : fallbackDestinations;
-    if (srcPool.length === 0 || dstPool.length === 0) break;
-    const s = srcPool[(nextRandom() * srcPool.length) | 0];
-    // Uniform pick: preserves the placement's decluttered spread instead of
-    // dragging mines toward one corner of the board.
-    const d = dstPool[(nextRandom() * dstPool.length) | 0];
-    grid[s.r][s.c].mine = false;
-    grid[d.r][d.c].mine = true;
-    computeAdjacents();
-  }
-
-  // Fallback: keep the last board (still has a safe zero opening).
-  // Only warn if it is genuinely still stuck, which should now be rare.
-  if (!isSolvable(grid, excludeR, excludeC)) {
-    console.warn('Could not repair board into a fully deducible one; using last board.');
-  }
+  // Fallback: compute adjacents for the last board, solvability not guaranteed.
+  computeAdjacents();
+  console.warn('No fully solvable board found; using last candidate.');
 }

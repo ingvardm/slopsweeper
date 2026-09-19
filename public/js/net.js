@@ -322,7 +322,7 @@ function mpStartSeededMatch(seed) {
   mpHideResult();
   initGrid();
   gameEnded = false;
-  generateBoardSafe(MP_FIRST_R, MP_FIRST_C, mpSeed);
+  generateBoardSafe(MP_FIRST_R, MP_FIRST_C);
   startTimer();
   firstClick = false; // board already generated; further clicks must not regen
   revealCell(MP_FIRST_R, MP_FIRST_C);
