@@ -84,23 +84,6 @@ function revealCell(r, c) {
   if (typeof mpOnLocalProgress === 'function') mpOnLocalProgress();
 }
 
-function captureBoardState(timeSec) {
-  const mines = [];
-  const revealed = [];
-  const flagged = [];
-  const questions = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const cell = grid[r][c];
-      if (cell.mine) mines.push([r, c]);
-      if (cell.revealed) revealed.push([r, c]);
-      if (cell.flagged) flagged.push([r, c]);
-      if (cell.question) questions.push([r, c]);
-    }
-  }
-  return { mines, revealed, flagged, questions, time: timeSec };
-}
-
 function gameOver(won) {
   const multiplayer = typeof mpIsMultiplayer === 'function' && mpIsMultiplayer();
   stopTimer();
@@ -177,14 +160,13 @@ function gameOver(won) {
       mpOnLocalFinish(true);
     } else {
       const timeSec = Math.floor((Date.now() - startTime) / 1000);
-      const boardState = captureBoardState(timeSec);
       // Prefill initials with the last stored name.
       if (typeof getStoredPlayerName === 'function') {
         const stored = getStoredPlayerName().toUpperCase().slice(0, 3);
         if (stored) $initialsInput.value = stored;
       }
       $modal.classList.remove('hidden');
-      $submitScore.onclick = () => submitScore(timeSec, boardState);
+      $submitScore.onclick = () => submitScore(timeSec);
     }
   }
 }

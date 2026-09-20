@@ -7,7 +7,6 @@ function updateStatusEmoji(state) {
   if (state === 'won') $status.dataset.face = 'won'; // Victory / Won
   else if (state === 'lost') $status.dataset.face = 'lost'; // Game Over / Lost
   else if (state === 'key') $status.dataset.face = 'suspense'; // Clicking / Suspense
-  else if (state === 'view') $status.dataset.face = 'view'; // Viewing saved game
   else $status.dataset.face = 'smile'; // Normal / Playing
 }
 
@@ -146,7 +145,6 @@ $statusEmoji.addEventListener('click', () => {
       return;
     }
   }
-  if (typeof resetViewingMode === 'function') resetViewingMode();
   initGrid();
   gameEnded = false;
 });

@@ -14,10 +14,6 @@ let triggeredMine = null; // Tracks the mine that caused the loss
 let timerInterval;
 let startTime = 0;
 
-let viewingMode = false;
-let viewedGameState = null;
-let viewedTime = 0;
-
 const $grid = document.getElementById('grid');
 const $timer = document.getElementById('timer');
 const $minesLeft = document.getElementById('mines-left');

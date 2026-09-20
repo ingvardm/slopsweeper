@@ -1,15 +1,13 @@
 // High-score API client: submit a victory time and render the leaderboard.
 
-function submitScore(timeSec, boardState) {
+function submitScore(timeSec) {
   const initials = $initialsInput.value.trim().toUpperCase().slice(0, 3);
   if (!initials) return alert('Enter initials');
   if (typeof setStoredPlayerName === 'function') setStoredPlayerName(initials);
-  const body = { playerInitials: initials, timeInSeconds: timeSec, date: new Date().toISOString() };
-  if (boardState) body.boardState = boardState;
   fetch('/api/scores', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ playerInitials: initials, timeInSeconds: timeSec, date: new Date().toISOString() })
   })
     .then(res => {
       if (!res.ok) throw new Error('Failed');
@@ -17,7 +15,6 @@ function submitScore(timeSec, boardState) {
     })
     .then(() => {
       $modal.classList.add('hidden');
-      // The won board stays put — a new game only starts via the face button.
       loadScores({ playerInitials: initials, timeInSeconds: timeSec });
       $leaderboardModal.classList.remove('hidden');
     })
@@ -39,19 +36,6 @@ function appendScoreRow(s, rankText, extraClass) {
   time.className = 'score-time';
   time.textContent = formatTime(s.timeInSeconds);
   li.append(rank, name, time);
-  li.classList.add('score-viewable');
-  li.style.cursor = 'pointer';
-  li.title = 'Click to view this game state';
-  li.addEventListener('click', () => {
-    try {
-      if (s.boardState && typeof restoreBoardState === 'function') {
-        restoreBoardState(s.boardState);
-      }
-      $leaderboardModal.classList.add('hidden');
-    } catch (e) {
-      console.error('Failed to restore board state:', e);
-    }
-  });
   $scoresList.appendChild(li);
   return li;
 }
@@ -83,3 +67,16 @@ function loadScores(highlight) {
     })
     .catch(() => {});
 }
+
+function resetScores() {
+  if (!confirm('Reset all scores? This cannot be undone.')) return;
+  fetch('/api/scores', { method: 'DELETE' })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed');
+      loadScores();
+    })
+    .catch(err => alert('Error resetting scores'));
+}
+
+const $leaderboardReset = document.getElementById('leaderboard-reset');
+if ($leaderboardReset) $leaderboardReset.addEventListener('click', resetScores);

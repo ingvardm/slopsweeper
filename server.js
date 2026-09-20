@@ -8,6 +8,20 @@ const HOST = process.env.HOST || '0.0.0.0';
 // SCORES_FILE lets Docker mount a persistent volume (e.g. -v scores:/app/data).
 // Defaults to ./scores.json for plain `node server.js` runs.
 const scoresFile = process.env.SCORES_FILE || path.join(__dirname, 'scores.json');
+const initScoresFile = path.join(__dirname, 'init-scores.json');
+
+// Ensure scores.json exists by copying init-scores.json if missing.
+try {
+  if (!fs.existsSync(scoresFile)) {
+    if (fs.existsSync(initScoresFile)) {
+      fs.copyFileSync(initScoresFile, scoresFile);
+    } else {
+      fs.writeFileSync(scoresFile, JSON.stringify([]));
+    }
+  }
+} catch (err) {
+  console.error('Error initializing scores file:', err);
+}
 
 // Health check for Docker HEALTHCHECK / orchestrators. No dependencies.
 app.get('/health', (req, res) => {
@@ -85,7 +99,7 @@ app.get('/api/scores', (req, res) => {
 
 // POST a new score
 app.post('/api/scores', (req, res) => {
-  const { playerInitials, timeInSeconds, date, boardState } = req.body;
+  const { playerInitials, timeInSeconds, date } = req.body;
   if (
     typeof playerInitials !== 'string' ||
     playerInitials.length === 0 ||
@@ -96,15 +110,28 @@ app.post('/api/scores', (req, res) => {
     return res.status(400).json({ error: 'Invalid score payload' });
   }
   const scores = readScores();
-  const entry = { playerInitials, timeInSeconds, date };
-  if (boardState) entry.boardState = boardState;
-  scores.push(entry);
+  scores.push({ playerInitials, timeInSeconds, date });
   // Sort and keep all entries (client can fetch top 10)
   scores.sort((a, b) => a.timeInSeconds - b.timeInSeconds);
   if (!writeScores(scores)) {
     return res.status(500).json({ error: 'Failed to write scores' });
   }
   res.status(201).json({ message: 'Score recorded' });
+});
+
+// DELETE all scores (reset)
+app.delete('/api/scores', (req, res) => {
+  try {
+    if (fs.existsSync(initScoresFile)) {
+      fs.copyFileSync(initScoresFile, scoresFile);
+    } else {
+      fs.writeFileSync(scoresFile, JSON.stringify([]));
+    }
+  } catch (err) {
+    console.error('Error resetting scores file:', err);
+    return res.status(500).json({ error: 'Failed to reset scores' });
+  }
+  res.status(200).json({ message: 'Scores reset' });
 });
 
 // ---- LAN lobby: hosted games list + WebRTC signaling relay ----
