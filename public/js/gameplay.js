@@ -15,21 +15,39 @@ function getNeighbors(r, c) {
   return neighbors;
 }
 
+const autoRevealVisited = new Set();
+
 function chordCell(r, c) {
+  const key = `${r},${c}`;
+  if (!autoRevealVisited.has(key)) {
+    autoRevealVisited.clear();
+    autoRevealVisited.add(key);
+  }
   const cell = grid[r][c];
-  // Only act on revealed numbered cells
   if (!cell.revealed || cell.adjacent === 0) return;
   const neighbors = getNeighbors(r, c);
   const flaggedCount = neighbors.filter(n => grid[n.r][n.c].flagged).length;
-  // Proceed only if flags match the number on the cell
   if (flaggedCount !== cell.adjacent) return;
-  // Reveal all unflagged, unrevealed neighbors
   neighbors.forEach(n => {
     const neighbor = grid[n.r][n.c];
     if (!neighbor.revealed && !neighbor.flagged) {
       revealCell(n.r, n.c);
     }
   });
+  if (getControls().autoReveal) {
+    neighbors.forEach(n => {
+      const neighbor = grid[n.r][n.c];
+      if (neighbor.revealed && neighbor.adjacent > 0 && !neighbor.mine) {
+        const nNeighbors = getNeighbors(n.r, n.c);
+        const nFlagged = nNeighbors.filter(nn => grid[nn.r][nn.c].flagged).length;
+        const key = `${n.r},${n.c}`;
+        if (nFlagged === neighbor.adjacent && !autoRevealVisited.has(key)) {
+          autoRevealVisited.add(key);
+          chordCell(n.r, n.c);
+        }
+      }
+    });
+  }
 }
 
 function clearTextNodes(el) {

@@ -46,6 +46,7 @@ function doLeftAction(r, c) {
   }
   if (cell.revealed) {
     if (cell.adjacent > 0 && (getControls().leftChord || getControls().iPadMode)) chordCell(r, c);
+    else if (getControls().autoReveal && cell.adjacent > 0) chordCell(r, c);
     return;
   }
   if (getControls().iPadMode && cell.flagged) {

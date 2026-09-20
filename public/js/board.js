@@ -53,6 +53,7 @@ function initGrid() {
   clearInterval(timerInterval);
   setTimer(0);
   updateStatusEmoji('default');
+  if (typeof autoRevealVisited !== 'undefined') autoRevealVisited.clear();
 }
 
 function computeAdjacents() {

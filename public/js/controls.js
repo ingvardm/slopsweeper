@@ -5,6 +5,7 @@
 // - iPadMode: touch-optimised scheme — single tap always chords, long-press
 //   flags, "?" is disabled, and the other gameplay options are overridden.
 // - iPadLongPress: long-press duration in iPad mode (milliseconds)
+// - autoReveal: when on, left-clicking a revealed number auto-chords if flags match
 // - useQuestion: right-click cycle includes "?" (unmarked -> flag -> ? -> unmarked)
 // - leftChord: left-click on a revealed number chords (otherwise it previews)
 // - emulateMiddle: pressing left+right together on a revealed number chords
@@ -13,6 +14,7 @@ const CONTROLS_KEY = 'slopsweeper.controls';
 const DEFAULT_CONTROLS = {
   iPadMode: false,
   iPadLongPress: 180,
+  autoReveal: false,
   useQuestion: true,
   leftChord: false,
   emulateMiddle: true,
@@ -36,6 +38,7 @@ function sanitizeControls(raw) {
   return {
     iPadMode: typeof src.iPadMode === 'boolean' ? src.iPadMode : DEFAULT_CONTROLS.iPadMode,
     iPadLongPress: (typeof lp === 'number' && lp > 0) ? lp : DEFAULT_CONTROLS.iPadLongPress,
+    autoReveal: typeof src.autoReveal === 'boolean' ? src.autoReveal : DEFAULT_CONTROLS.autoReveal,
     useQuestion: typeof src.useQuestion === 'boolean' ? src.useQuestion : DEFAULT_CONTROLS.useQuestion,
     leftChord: typeof src.leftChord === 'boolean' ? src.leftChord : DEFAULT_CONTROLS.leftChord,
     emulateMiddle: typeof src.emulateMiddle === 'boolean' ? src.emulateMiddle : DEFAULT_CONTROLS.emulateMiddle,

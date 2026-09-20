@@ -384,6 +384,7 @@ function refreshControlsForm() {
   const $q = document.getElementById('ctl-use-question');
   const $l = document.getElementById('ctl-left-chord');
   const $m = document.getElementById('ctl-emulate-middle');
+  const $ar = document.getElementById('ctl-auto-reveal');
   const $kl = document.getElementById('ctl-key-left');
   const $kr = document.getElementById('ctl-key-right');
   const $km = document.getElementById('ctl-key-middle');
@@ -392,6 +393,7 @@ function refreshControlsForm() {
   if ($q) $q.checked = c.useQuestion;
   if ($l) $l.checked = c.leftChord;
   if ($m) $m.checked = c.emulateMiddle;
+  if ($ar) $ar.checked = c.autoReveal;
   if ($kl) $kl.value = c.keyLeft;
   if ($kr) $kr.value = c.keyRight;
   if ($km) $km.value = c.keyMiddle;
@@ -415,11 +417,13 @@ const $ctlIPadLP = document.getElementById('ctl-ipad-longpress');
 const $ctlQuestion = document.getElementById('ctl-use-question');
 const $ctlLeftChord = document.getElementById('ctl-left-chord');
 const $ctlEmulateMiddle = document.getElementById('ctl-emulate-middle');
+const $ctlAR = document.getElementById('ctl-auto-reveal');
 if ($ctlIPad) $ctlIPad.addEventListener('change', (e) => {
   setControls({ iPadMode: e.target.checked });
   applyGameplayDisabled(e.target.checked);
 });
-if ($ctlIPadLP) $ctlIPadLP.addEventListener('change', (e) => setControls({ iPadLongPress: e.target.value }));
+if ($ctlIPadLP) $ctlIPadLP.addEventListener('change', (e) => setControls({ iPadLongPress: Number(e.target.value) }));
+if ($ctlAR) $ctlAR.addEventListener('change', (e) => setControls({ autoReveal: e.target.checked }));
 if ($ctlQuestion) $ctlQuestion.addEventListener('change', (e) => setControls({ useQuestion: e.target.checked }));
 if ($ctlLeftChord) $ctlLeftChord.addEventListener('change', (e) => setControls({ leftChord: e.target.checked }));
 if ($ctlEmulateMiddle) $ctlEmulateMiddle.addEventListener('change', (e) => setControls({ emulateMiddle: e.target.checked }));
