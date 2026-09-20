@@ -424,6 +424,7 @@ body {
 #status-emoji[data-face="won"]::after { content: var(--glyph-face-won); }
 #status-emoji[data-face="lost"]::after { content: var(--glyph-face-lost); }
 #status-emoji[data-face="suspense"]::after { content: var(--glyph-face-suspense); }
+#status-emoji[data-face="view"]::after { content: "🔍"; }
 
 /* Disabled in multiplayer (new game would desync the match) — must render
    exactly like the enabled button: browsers gray out :disabled controls via
@@ -917,6 +918,7 @@ body {
   font-family: var(--font-mono);
   font-size: 13px;
   border-bottom: 1px dotted var(--muted-text);
+  cursor: pointer;
 }
 
 .scores-list li:last-child { border-bottom: none; }
@@ -925,6 +927,8 @@ body {
 
 /* The just-submitted score after a completed game — red, ranked or not */
 .scores-list li.score-new { color: red; font-weight: bold; }
+.scores-list li.score-viewable { cursor: pointer; }
+.scores-list li.score-viewable:hover { background: var(--title-gradient-b); color: var(--title-text); }
 
 .scores-list .score-rank { white-space: nowrap; }
 .scores-list .score-name {

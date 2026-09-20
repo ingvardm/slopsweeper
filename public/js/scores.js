@@ -1,13 +1,15 @@
 // High-score API client: submit a victory time and render the leaderboard.
 
-function submitScore(timeSec) {
+function submitScore(timeSec, boardState) {
   const initials = $initialsInput.value.trim().toUpperCase().slice(0, 3);
   if (!initials) return alert('Enter initials');
   if (typeof setStoredPlayerName === 'function') setStoredPlayerName(initials);
+  const body = { playerInitials: initials, timeInSeconds: timeSec, date: new Date().toISOString() };
+  if (boardState) body.boardState = boardState;
   fetch('/api/scores', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ playerInitials: initials, timeInSeconds: timeSec, date: new Date().toISOString() })
+    body: JSON.stringify(body)
   })
     .then(res => {
       if (!res.ok) throw new Error('Failed');
@@ -37,6 +39,19 @@ function appendScoreRow(s, rankText, extraClass) {
   time.className = 'score-time';
   time.textContent = formatTime(s.timeInSeconds);
   li.append(rank, name, time);
+  li.classList.add('score-viewable');
+  li.style.cursor = 'pointer';
+  li.title = 'Click to view this game state';
+  li.addEventListener('click', () => {
+    try {
+      if (s.boardState && typeof restoreBoardState === 'function') {
+        restoreBoardState(s.boardState);
+      }
+      $leaderboardModal.classList.add('hidden');
+    } catch (e) {
+      console.error('Failed to restore board state:', e);
+    }
+  });
   $scoresList.appendChild(li);
   return li;
 }

@@ -53,6 +53,129 @@ function initGrid() {
   clearInterval(timerInterval);
   setTimer(0);
   updateStatusEmoji('default');
+  viewingMode = false;
+  viewedGameState = null;
+}
+
+function clearCellDOM(cellEl, r, c) {
+  const glyphs = ['bomb', 'flag', 'wrong', 'explosion'];
+  glyphs.forEach(g => {
+    const el = cellEl.querySelector(`.cell-${g}`);
+    if (el) el.classList.remove('exploded', 'flagged');
+  });
+  cellEl.classList.remove('revealed', 'flagged', 'questioned', 'preview');
+  cellEl.dataset.glyph = '';
+  cellEl.dataset.num = '';
+  for (let i = cellEl.childNodes.length - 1; i >= 0; i--) {
+    if (cellEl.childNodes[i].nodeType === 3) cellEl.childNodes[i].remove();
+  }
+  const questionEl = cellEl.querySelector('.cell-question');
+  if (questionEl) questionEl.classList.remove('questioned');
+  const flagEl = cellEl.querySelector('.cell-flag');
+  if (flagEl) flagEl.classList.remove('flagged');
+  const explosionEl = cellEl.querySelector('.cell-explosion');
+  if (explosionEl) explosionEl.classList.remove('exploded');
+}
+
+function setCellNumber(cellEl, num) {
+  cellEl.classList.add('revealed');
+  cellEl.dataset.num = String(num);
+  for (let i = cellEl.childNodes.length - 1; i >= 0; i--) {
+    if (cellEl.childNodes[i].nodeType === 3) cellEl.childNodes[i].remove();
+  }
+  cellEl.appendChild(document.createTextNode(num));
+}
+
+function restoreBoardState(state) {
+  try {
+    grid = Array.from({ length: ROWS }, () =>
+      Array.from({ length: COLS }, () => ({
+        mine: false,
+        revealed: false,
+        flagged: false,
+        question: false,
+        adjacent: 0,
+      }))
+    );
+
+    state.mines.forEach(([r, c]) => { grid[r][c].mine = true; });
+    computeAdjacents();
+    state.revealed.forEach(([r, c]) => { grid[r][c].revealed = true; });
+    state.flagged.forEach(([r, c]) => { grid[r][c].flagged = true; });
+    state.questions.forEach(([r, c]) => { grid[r][c].question = true; });
+
+    $grid.innerHTML = '';
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cellEl = document.createElement('div');
+        cellEl.classList.add('cell');
+        cellEl.dataset.r = r;
+        cellEl.dataset.c = c;
+        const flagEl = document.createElement('span');
+        flagEl.classList.add('cell-flag');
+        flagEl.textContent = getThemeGlyph('flag');
+        cellEl.appendChild(flagEl);
+        const questionEl = document.createElement('span');
+        questionEl.classList.add('cell-question');
+        questionEl.textContent = getThemeGlyph('question');
+        cellEl.appendChild(questionEl);
+        const explosionEl = document.createElement('span');
+        explosionEl.classList.add('cell-explosion');
+        explosionEl.textContent = getThemeGlyph('explosion');
+        cellEl.appendChild(explosionEl);
+        cellEl.addEventListener('click', onCellClick);
+        cellEl.addEventListener('dblclick', e => {
+          e.preventDefault();
+          onCellDoubleClick(e);
+        });
+        cellEl.addEventListener('contextmenu', onCellRightClick);
+        cellEl.addEventListener('mouseover', () => {
+          lastR = r;
+          lastC = c;
+        });
+
+        const cell = grid[r][c];
+        if (cell.mine) {
+          cellEl.dataset.glyph = 'bomb';
+        }
+        if (cell.revealed) {
+          if (cell.mine) {
+            cellEl.dataset.glyph = 'bomb';
+          } else if (cell.adjacent > 0) {
+            setCellNumber(cellEl, cell.adjacent);
+          }
+          cellEl.classList.add('revealed');
+        }
+        if (cell.flagged) {
+          cellEl.classList.add('flagged');
+          flagEl.classList.add('flagged');
+        }
+        if (cell.question) {
+          cellEl.classList.add('questioned');
+          questionEl.classList.add('questioned');
+        }
+
+        $grid.appendChild(cellEl);
+      }
+    }
+
+    flagsLeft = MINES - state.flagged.length;
+    setMinesLeft(flagsLeft);
+    revealedCount = state.revealed.length;
+    setTimer(state.time || 0);
+    viewingMode = true;
+    viewedGameState = state;
+    viewedTime = state.time || 0;
+    updateStatusEmoji('view');
+  } catch (e) {
+    console.error('restoreBoardState failed:', e);
+  }
+}
+
+function resetViewingMode() {
+  viewingMode = false;
+  viewedGameState = null;
+  viewedTime = 0;
 }
 
 function computeAdjacents() {
@@ -177,13 +300,14 @@ function restoreMines(coords) {
  * 2. Validate opening size (26-39 cells revealed on first click).
  * 3. Validate solvability via the constraint-propagation solver.
  * 4. Reject and regenerate if either check fails.
+ *
+ * This generator NEVER returns an unsolvable board. It keeps trying
+ * until a solvable board is found.
  */
 function generateBoardSafe(excludeR, excludeC) {
-  const MAX_ATTEMPTS = 60;
-  const TIME_BUDGET_MS = 2500;
-  const t0 = Date.now();
-
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+  let attempt = 0;
+  while (true) {
+    attempt++;
     placeMinesRandom(excludeR, excludeC);
     computeAdjacents();
 
@@ -194,25 +318,11 @@ function generateBoardSafe(excludeR, excludeC) {
     if (!openingInRange(size)) continue;
 
     // Board must be solvable without guessing
-    if (Date.now() - t0 > TIME_BUDGET_MS) break;
-    if (!isSolvable(grid, excludeR, excludeC)) continue;
-
-    return; // board accepted
-  }
-
-  // Fallback: try a few more attempts without the time budget
-  // to find a solvable board instead of using the last unsolvable one
-  for (let attempt = 0; attempt < 10; attempt++) {
-    placeMinesRandom(excludeR, excludeC);
-    computeAdjacents();
-    const opening = computeOpeningSet(excludeR, excludeC);
-    const size = openingSize(opening);
-    if (!openingInRange(size)) continue;
     if (isSolvable(grid, excludeR, excludeC)) return;
-  }
 
-  // Last resort: keep the best board so far, but always ensure
-  // adjacents are computed so the board is internally consistent
-  computeAdjacents();
-  console.warn('No fully solvable board found; using last candidate.');
+    // Safety: prevent infinite loop in extremely unlikely edge case
+    if (attempt > 10000) {
+      throw new Error(`generateBoardSafe: could not find solvable board after ${attempt} attempts`);
+    }
+  }
 }

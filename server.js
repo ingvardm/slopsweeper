@@ -85,7 +85,7 @@ app.get('/api/scores', (req, res) => {
 
 // POST a new score
 app.post('/api/scores', (req, res) => {
-  const { playerInitials, timeInSeconds, date } = req.body;
+  const { playerInitials, timeInSeconds, date, boardState } = req.body;
   if (
     typeof playerInitials !== 'string' ||
     playerInitials.length === 0 ||
@@ -96,7 +96,9 @@ app.post('/api/scores', (req, res) => {
     return res.status(400).json({ error: 'Invalid score payload' });
   }
   const scores = readScores();
-  scores.push({ playerInitials, timeInSeconds, date });
+  const entry = { playerInitials, timeInSeconds, date };
+  if (boardState) entry.boardState = boardState;
+  scores.push(entry);
   // Sort and keep all entries (client can fetch top 10)
   scores.sort((a, b) => a.timeInSeconds - b.timeInSeconds);
   if (!writeScores(scores)) {

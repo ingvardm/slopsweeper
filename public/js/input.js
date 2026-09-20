@@ -37,6 +37,7 @@ function isNumberedOpen(r, c) {
 }
 
 function doLeftAction(r, c) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   const cell = grid[r][c];
   if (gameEnded) return;
   if (firstClick) {
@@ -73,6 +74,7 @@ function onCellClick(e) {
 // Only flags count against the mines-left counter; "?" is just a reminder.
 // Glyphs are pure CSS (cell[data-glyph] + theme vars); JS only sets state.
 function onCellRightClick(e) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
   if (suppressContextMenu) {
     suppressContextMenu = false;
@@ -117,6 +119,7 @@ function onCellRightClick(e) {
 }
 
 function onCellDoubleClick(e) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   if (gameEnded) return;
   const pos = parseCellTarget(e);
   if (!pos) return;
@@ -178,6 +181,7 @@ let longPressFired = false;
 const IPAD_LONG_PRESS_MS = { fast: 200, medium: 300, slow: 450 };
 
 function onGridTouchStart(e) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   if (!getControls().iPadMode || gameEnded) return;
   e.preventDefault();
   const touch = e.touches[0];
@@ -198,6 +202,7 @@ function onGridTouchStart(e) {
 }
 
 function onGridTouchMove(e) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   if (!touchStartXY) return;
   const touch = e.touches[0];
   const dx = touch.clientX - touchStartXY.x;
@@ -219,6 +224,7 @@ function onGridTouchMove(e) {
 }
 
 function onGridTouchEnd(e) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   if (!getControls().iPadMode) return;
   if (longPressTimer) {
     clearTimeout(longPressTimer);
@@ -258,6 +264,7 @@ function clearPressPreview() {
 }
 
 function onGridMouseDown(e) {
+  if (typeof viewingMode !== 'undefined' && viewingMode) return;
   if (gameEnded) return;
   const pos = parseCellTarget(e);
   if (!pos) return;
