@@ -715,6 +715,29 @@ body {
   outline: none;
 }
 
+/* Link-styled button (used for reset in scores modal) */
+.link-btn {
+  font-family: inherit;
+  font-size: 13px;
+  background: transparent;
+  color: var(--modal-text);
+  text-decoration: underline;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  box-shadow: none;
+  margin-right: auto;
+}
+
+.link-btn:hover {
+  color: var(--title-gradient-a);
+}
+
+.link-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 2px;
+}
+
 .win98-btn:disabled {
   opacity: 0.55;
   cursor: default;

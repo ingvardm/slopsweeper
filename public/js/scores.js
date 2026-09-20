@@ -69,13 +69,34 @@ function loadScores(highlight) {
 }
 
 function resetScores() {
-  if (!confirm('Reset all scores? This cannot be undone.')) return;
-  fetch('/api/scores', { method: 'DELETE' })
-    .then(res => {
-      if (!res.ok) throw new Error('Failed');
-      loadScores();
-    })
-    .catch(err => alert('Error resetting scores'));
+  const $confirmModal = document.getElementById('confirm-modal');
+  const $confirmMessage = document.getElementById('confirm-message');
+  const $confirmYes = document.getElementById('confirm-yes');
+  const $confirmNo = document.getElementById('confirm-no');
+  const $confirmClose = document.getElementById('confirm-close');
+  if (!$confirmModal) return;
+  $confirmMessage.textContent = 'Reset all scores? This cannot be undone.';
+  $confirmModal.classList.remove('hidden');
+  $confirmModal.onclick = function (e) {
+    if (e.target === $confirmModal) closeConfirm();
+  };
+  function closeConfirm() {
+    $confirmModal.classList.add('hidden');
+    $confirmYes.onclick = null;
+    $confirmNo.onclick = null;
+    if ($confirmClose) $confirmClose.onclick = null;
+  }
+  $confirmYes.onclick = function () {
+    closeConfirm();
+    fetch('/api/scores', { method: 'DELETE' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed');
+        loadScores();
+      })
+      .catch(err => alert('Error resetting scores'));
+  };
+  $confirmNo.onclick = closeConfirm;
+  if ($confirmClose) $confirmClose.onclick = closeConfirm;
 }
 
 const $leaderboardReset = document.getElementById('leaderboard-reset');

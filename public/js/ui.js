@@ -484,6 +484,8 @@ $modal.addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    const $confirmModal = document.getElementById('confirm-modal');
+    if ($confirmModal) $confirmModal.classList.add('hidden');
     $leaderboardModal.classList.add('hidden');
     closeMenu();
     closeSettings();
