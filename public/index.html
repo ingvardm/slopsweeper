@@ -225,12 +225,8 @@
               <input type="checkbox" id="ctl-ipad-mode" /> <span>iPad mode</span>
             </label>
             <div class="dlg-row ipad-only">
-              <label class="dlg-label" for="ctl-ipad-longpress">Long press:</label>
-              <select id="ctl-ipad-longpress" class="theme-select">
-                <option value="fast">Fast (200 ms)</option>
-                <option value="medium">Medium (300 ms)</option>
-                <option value="slow">Slow (450 ms)</option>
-              </select>
+              <label class="dlg-label" for="ctl-ipad-longpress">Long press (ms):</label>
+              <input type="number" id="ctl-ipad-longpress" class="text-input" style="max-width:70px;text-align:center;" min="1" step="10" value="180" />
             </div>
             <label class="settings-check gameplay-opt" title="Right-click cycle includes a question mark">
               <input type="checkbox" id="ctl-use-question" /> <span>Use ?</span>

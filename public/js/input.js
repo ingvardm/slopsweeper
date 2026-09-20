@@ -175,8 +175,6 @@ let touchStartXY = null;
 let longPressTimer = null;
 let longPressFired = false;
 
-const IPAD_LONG_PRESS_MS = { fast: 200, medium: 300, slow: 450 };
-
 function onGridTouchStart(e) {
   if (!getControls().iPadMode || gameEnded) return;
   e.preventDefault();
@@ -187,7 +185,7 @@ function onGridTouchStart(e) {
   if (!pos) return;
   touchStartXY = { x: touch.clientX, y: touch.clientY };
   longPressFired = false;
-  const ms = IPAD_LONG_PRESS_MS[getControls().iPadLongPress] || 300;
+  const ms = getControls().iPadLongPress || 180;
   longPressTimer = setTimeout(() => {
     longPressTimer = null;
     if (touchStartXY) {

@@ -4,7 +4,7 @@
 //
 // - iPadMode: touch-optimised scheme — single tap always chords, long-press
 //   flags, "?" is disabled, and the other gameplay options are overridden.
-// - iPadLongPress: long-press duration in iPad mode ('fast'=200, 'medium'=300, 'slow'=450)
+// - iPadLongPress: long-press duration in iPad mode (milliseconds)
 // - useQuestion: right-click cycle includes "?" (unmarked -> flag -> ? -> unmarked)
 // - leftChord: left-click on a revealed number chords (otherwise it previews)
 // - emulateMiddle: pressing left+right together on a revealed number chords
@@ -12,7 +12,7 @@
 const CONTROLS_KEY = 'slopsweeper.controls';
 const DEFAULT_CONTROLS = {
   iPadMode: false,
-  iPadLongPress: 'medium',
+  iPadLongPress: 180,
   useQuestion: true,
   leftChord: false,
   emulateMiddle: true,
@@ -32,10 +32,10 @@ function sanitizeControlKey(v, fallback) {
 
 function sanitizeControls(raw) {
   const src = (raw && typeof raw === 'object') ? raw : {};
-  const longPressValues = ['fast', 'medium', 'slow'];
+  const lp = Number(src.iPadLongPress);
   return {
     iPadMode: typeof src.iPadMode === 'boolean' ? src.iPadMode : DEFAULT_CONTROLS.iPadMode,
-    iPadLongPress: longPressValues.includes(src.iPadLongPress) ? src.iPadLongPress : DEFAULT_CONTROLS.iPadLongPress,
+    iPadLongPress: (typeof lp === 'number' && lp > 0) ? lp : DEFAULT_CONTROLS.iPadLongPress,
     useQuestion: typeof src.useQuestion === 'boolean' ? src.useQuestion : DEFAULT_CONTROLS.useQuestion,
     leftChord: typeof src.leftChord === 'boolean' ? src.leftChord : DEFAULT_CONTROLS.leftChord,
     emulateMiddle: typeof src.emulateMiddle === 'boolean' ? src.emulateMiddle : DEFAULT_CONTROLS.emulateMiddle,
