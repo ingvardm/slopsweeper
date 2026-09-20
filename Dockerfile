@@ -26,7 +26,7 @@ RUN apk upgrade --no-cache \
 
 # Non-root user `node` (uid 1000) ships with the official image.
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json server.js docker-entrypoint.sh ./
+COPY package.json server.js docker-entrypoint.sh init-scores.json ./
 COPY public ./public
 
 # Writable dir for the scores volume when running as `node`.
