@@ -65,13 +65,14 @@ self.onmessage = (e) => {
   });
 };
 
-// Generates candidates until one verifies, then posts it and stops. The main
-// thread discards us as soon as any worker wins, so there is nothing to gain
-// from producing a second board.
+// Generates candidates until one verifies and meets the mood's minimum, then
+// posts it and stops. The main thread discards us as soon as any worker wins, so
+// there is nothing to gain from producing a second board.
 async function race() {
   const deadline = Date.now() + request.budgetMs;
   const startTime = deadline - request.budgetMs;
   let candidates = 0;
+  let rejected = 0;
   let lastReason = 'budget';
 
   while (Date.now() < deadline) {
@@ -89,7 +90,7 @@ async function race() {
       });
     } catch (e) {
       // A fault in the vendored engine must not look like a verified board.
-      post({ type: 'exhausted', reason: 'engine error', detail: String((e && e.message) || e), candidates });
+      post({ type: 'exhausted', reason: 'engine error', detail: String((e && e.message) || e), candidates, rejected });
       return;
     }
 
@@ -98,7 +99,7 @@ async function race() {
       // touches every other, admits no no-guess layout at all. Retrying cannot
       // help, so stop at once.
       if (res.reason === 'board-limit' || res.reason === 'iteration-limit') {
-        post({ type: 'exhausted', reason: res.reason, candidates, elapsedMs: Date.now() - startTime });
+        post({ type: 'exhausted', reason: res.reason, candidates, rejected, elapsedMs: Date.now() - startTime });
         return;
       }
       // Otherwise the attempt simply ran out of its own slice of the budget,
@@ -113,21 +114,47 @@ async function race() {
     }
     candidates++;
 
-    if (isSolvable(gridFromCells(res.cells), request.startR, request.startC)) {
-      post({
-        type: 'board',
-        cells: res.cells,
-        candidates,
-        attempts: res.attempts,
-        elapsedMs: Date.now() - startTime,
-      });
+    // Difficulty accounting is part of the solver-mood feature, which is
+    // custom-only, so a preset request takes the pre-mood path unchanged: one
+    // solve for the verdict, nothing measured, nothing to judge a minimum
+    // against. For a mood the same solve also measures the board, so the main
+    // thread never has to re-verify it.
+    const verify = gridFromCells(res.cells);
+    const solved = request.analyzeDifficulty
+      ? solveWithDifficulty(verify, request.startR, request.startC)
+      : { solved: isSolvable(verify, request.startR, request.startC) };
+    if (!solved.solved) {
+      // Roughly half of the engine's candidates fail the independent check, so
+      // this is the normal path, not an anomaly: go round again.
+      continue;
+    }
+    if (!request.analyzeDifficulty) {
+      post({ type: 'board', cells: res.cells, candidates, attempts: res.attempts, elapsedMs: Date.now() - startTime });
       return;
     }
-    // Roughly half of the engine's candidates fail the independent check, so
-    // this is the normal path, not an anomaly: go round again.
+
+    // A board that is solvable but too easy for the mood is reported as a board
+    // with `rejected` set, rather than withheld: the main thread is counting the
+    // batch and has to know this attempt happened.
+    const difficulty = solved.difficulty;
+    const meetsMood =
+      countAtLeastTier(difficulty, 'sophisticated') >= (request.minSophisticated || 0) &&
+      countAtLeastTier(difficulty, 'top-tier') >= (request.minTopTier || 0);
+    if (!meetsMood) rejected++;
+    post({
+      type: 'board',
+      cells: res.cells,
+      difficulty,
+      rejected: meetsMood ? undefined : 1,
+      candidates,
+      rejected,
+      attempts: res.attempts,
+      elapsedMs: Date.now() - startTime,
+    });
+    return;
   }
 
-  post({ type: 'exhausted', reason: lastReason, candidates, elapsedMs: Date.now() - startTime });
+  post({ type: 'exhausted', reason: lastReason, candidates, rejected, elapsedMs: Date.now() - startTime });
 }
 
 // solver.js wants a 2D grid of cells; the engine hands back the same information

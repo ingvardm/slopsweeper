@@ -898,7 +898,6 @@ body {
   min-width: 320px;
   max-width: 420px;
   width: max-content;
-  transform: translateY(-12vh);
 }
 
 #settings-modal .modal-window { width: 420px; max-width: calc(100vw - 32px); }

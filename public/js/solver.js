@@ -10,6 +10,51 @@
 // larger custom boards; 45 keeps the check honest without that cost. Raising it
 // further widens what counts as solvable, at the price of time.
 
+// How hard each deduction was to reach, and which pattern produced it. The names
+// are the ones the Minesweeper community uses; the tiers are what the "Solver
+// mood" setting filters on.
+//
+// The basic/sophisticated split is not cosmetic, it falls out of how the solver
+// below reaches a move. The single-point pass has already run to a fixpoint over
+// the whole board by the time the component pass takes a move, so anything the
+// component pass resolves is by construction something the single-point rules
+// could not settle on their own: two or more constraints had to be compared
+// against each other. That is exactly the line between "a beginner can do this
+// by looking" and "you have to reason about combinations".
+//
+// Within the component pass, what decides how demanding a move was is not the
+// size of the component but the width of the narrowest constraint that touches
+// the move: the number of unknowns that deduction had to resolve. A component
+// can be large merely because the frontier happens to be connected, while the
+// move itself came from a 2-cell constraint. Measured distributions for both are
+// in README.md.
+const DEDUCTION_TIERS = {
+  basic: { tier: 'basic', weight: 1 },
+  sophisticated: { tier: 'sophisticated', weight: 4 },
+  'top-tier': { tier: 'top-tier', weight: 12 },
+};
+
+// Constraint widths that mean "reason over a handful of unknowns" and "reason
+// over a real combinatorial space". A width of 3 is the 1-2-1-2 / subset family;
+// from 4 up the placements interact enough that they have to be tracked.
+const SOPHISTICATED_MIN_WIDTH = 3;
+const TOP_TIER_MIN_WIDTH = 4;
+
+// Community names for the same three tiers, used for display.
+const TIER_TECHNIQUE = {
+  basic: 'single-point',
+  sophisticated: 'subset',
+  'top-tier': 'hitting-set',
+};
+
+function tierForWidth(width) {
+  if (width >= TOP_TIER_MIN_WIDTH) return 'top-tier';
+  if (width >= SOPHISTICATED_MIN_WIDTH) return 'sophisticated';
+  return 'basic';
+}
+
+const DIFFICULTY_TIER_ORDER = ['basic', 'sophisticated', 'top-tier'];
+
 /**
  * Determine if a board can be solved entirely by logical deduction.
  *
@@ -21,6 +66,64 @@ function isSolvable(board, startR, startC) {
   return analyzeBoard(board, startR, startC).solved;
 }
 
+/**
+ * Same solve, but also reports how hard each move was. Returns
+ * { solved, revealed, difficulty }.
+ */
+function solveWithDifficulty(board, startR, startC) {
+  return analyzeBoard(board, startR, startC);
+}
+
+/** A fresh, zeroed difficulty tally. */
+function newDifficultyTally() {
+  return {
+    moves: 0,
+    techniques: {},        // technique -> number of moves it produced
+    tiers: { basic: 0, sophisticated: 0, 'top-tier': 0 },
+    score: 0,              // raw weighted total; ranks boards of equal size
+    percent: 0,            // 0-100, share of moves that were not basic
+    widths: {},           // deciding constraint width -> moves
+    components: {},       // component frontier size -> moves (diagnostic)
+  };
+}
+
+function tallyDeduction(tally, tier, width, component) {
+  const spec = DEDUCTION_TIERS[tier] || DEDUCTION_TIERS.basic;
+  tally.moves++;
+  tally.tiers[tier] = (tally.tiers[tier] || 0) + 1;
+  const technique = TIER_TECHNIQUE[tier] || 'single-point';
+  tally.techniques[technique] = (tally.techniques[technique] || 0) + 1;
+  tally.score += spec.weight;
+  if (width != null) tally.widths[width] = (tally.widths[width] || 0) + 1;
+  if (component != null) tally.components[component] = (tally.components[component] || 0) + 1;
+}
+
+function finishDifficulty(tally) {
+  const hard = tally.tiers.sophisticated + tally.tiers['top-tier'];
+  tally.score = tally.score || 0;
+  tally.percent = tally.moves ? Math.round((100 * hard) / tally.moves) : 0;
+  // Techniques are stored under their display names, so order them by the tier
+  // each one stands for, hardest first.
+  const tierOf = {};
+  for (const tier of DIFFICULTY_TIER_ORDER) tierOf[TIER_TECHNIQUE[tier]] = tier;
+  tally.used = Object.keys(tally.techniques).sort(
+    (a, b) => DIFFICULTY_TIER_ORDER.indexOf(tierOf[b]) - DIFFICULTY_TIER_ORDER.indexOf(tierOf[a]) || a.localeCompare(b)
+  );
+  tally.summary = DIFFICULTY_TIER_ORDER.filter((t) => tally.tiers[t] > 0)
+    .map((t) => `${t} ${tally.tiers[t]}`)
+    .join(', ');
+  return tally;
+}
+
+/** How many deductions used at least a given tier. */
+function countAtLeastTier(tally, tier) {
+  const from = DIFFICULTY_TIER_ORDER.indexOf(tier);
+  if (from < 0) return 0;
+  let n = 0;
+  for (let i = from; i < DIFFICULTY_TIER_ORDER.length; i++) n += tally.tiers[DIFFICULTY_TIER_ORDER[i]] || 0;
+  return n;
+}
+
 // Core solver. Returns { solved, revealed } where revealed is the boolean
 // grid of what the logical solver could uncover. Never mutates `board`.
 function analyzeBoard(board, startR, startC) {
@@ -28,19 +131,24 @@ function analyzeBoard(board, startR, startC) {
   const MAX_SOL_ENUM = 2000; // solution cap per component enumeration
   const MAX_ROUNDS = 2000;
 
+  const tally = newDifficultyTally();
+
   const mineAt = (r, c) => board[r][c].mine;
   const adjAt = (r, c) => board[r][c].adjacent;
 
   const revealed = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
   const flagged = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
 
-  const flood = (sr, sc) => {
+  // `technique`/`width` record how this reveal was reached; pass no tally for
+  // the opening flood, which is a zero-expansion rather than a deduction.
+  const flood = (sr, sc, tally, tier, width, component) => {
     const queue = [{ r: sr, c: sc }];
     while (queue.length) {
       const { r, c } = queue.pop();
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
       if (revealed[r][c] || flagged[r][c] || mineAt(r, c)) continue;
       revealed[r][c] = true;
+      if (tally) tallyDeduction(tally, tier, width, component);
       if (adjAt(r, c) === 0) {
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
@@ -95,7 +203,7 @@ function analyzeBoard(board, startR, startC) {
           if (flags === adjAt(r, c)) {
             for (const nb of covered) {
               if (!revealed[nb.r][nb.c] && !flagged[nb.r][nb.c]) {
-                flood(nb.r, nb.c);
+                flood(nb.r, nb.c, tally, tierForWidth(covered.length), covered.length);
                 basicChanged = true;
               }
             }
@@ -103,6 +211,7 @@ function analyzeBoard(board, startR, startC) {
             for (const nb of covered) {
               if (!flagged[nb.r][nb.c]) {
                 flagged[nb.r][nb.c] = true;
+                tallyDeduction(tally, tierForWidth(covered.length), covered.length);
                 basicChanged = true;
               }
             }
@@ -111,7 +220,7 @@ function analyzeBoard(board, startR, startC) {
       }
     }
 
-    if (revealedSafeCount() === totalSafe) return { solved: true, revealed };
+    if (revealedSafeCount() === totalSafe) return { solved: true, revealed, difficulty: finishDifficulty(tally) };
 
     // 2. Frontier = covered, unflagged cells touching a revealed number.
     const frontierIndex = new Map(); // "r,c" -> idx
@@ -130,7 +239,7 @@ function analyzeBoard(board, startR, startC) {
         }
       }
     }
-    if (frontier.length === 0) return { solved: false, revealed }; // stuck
+    if (frontier.length === 0) return { solved: false, revealed, difficulty: finishDifficulty(tally) }; // stuck
 
     // 3. Constraints from the solver's point of view (no ground truth!).
     const constraints = [];
@@ -148,7 +257,7 @@ function analyzeBoard(board, startR, startC) {
         }
         if (cells.length === 0) continue;
         if (required < 0 || required > cells.length) {
-          return { solved: false, revealed }; // inconsistent -> stuck
+          return { solved: false, revealed, difficulty: finishDifficulty(tally) }; // inconsistent -> stuck
         }
         constraints.push({ cells, mines: required });
       }
@@ -226,21 +335,34 @@ function analyzeBoard(board, startR, startC) {
       };
       backtrack(0);
 
-      if (solutions === 0) return { solved: false, revealed };
+      if (solutions === 0) return { solved: false, revealed, difficulty: finishDifficulty(tally) };
+      // The single-point pass above already ran to a fixpoint across the whole
+      // board, so whatever is left here is by construction a cell the basic
+      // rules alone could not settle. The width decides how demanding the
+      // combination reasoning was.
+      // How many unknowns did this move actually have to reason over? Take the
+      // narrowest constraint in the component that touches the cell: a move can
+      // be pinned by a 3-cell constraint even inside a 20-cell component.
+      const narrowest = new Array(k).fill(Infinity);
+      for (const con of local) {
+        for (const ci of con.cells) if (con.cells.length < narrowest[ci]) narrowest[ci] = con.cells.length;
+      }
       for (let i = 0; i < k; i++) {
         const cell = frontier[gidx[i]];
+        const tier = tierForWidth(narrowest[i] === Infinity ? k : narrowest[i]);
         if (canBeMine[i] && !canBeSafe[i] && !flagged[cell.r][cell.c]) {
           flagged[cell.r][cell.c] = true;
+          tallyDeduction(tally, tier, narrowest[i], k);
           applied = true;
         } else if (canBeSafe[i] && !canBeMine[i] && !revealed[cell.r][cell.c]) {
-          flood(cell.r, cell.c);
+          flood(cell.r, cell.c, tally, tier, narrowest[i], k);
           applied = true;
         }
       }
     }
 
-    if (!applied) return { solved: false, revealed }; // needs a guess
+    if (!applied) return { solved: false, revealed, difficulty: finishDifficulty(tally) }; // needs a guess
   }
 
-  return { solved: false, revealed };
+  return { solved: false, revealed, difficulty: finishDifficulty(tally) };
 }

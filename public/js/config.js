@@ -56,6 +56,81 @@ const GENERATION_CANDIDATE_BUDGET_MS = 1500;
 // temporal dead zone and throw.
 const MAX_GENERATION_WORKERS = 32;
 
+// "Solver mood": how much deductive work a *custom* board is required to contain.
+//
+// Custom boards only. The five presets deliberately ignore this setting: their
+// generation is the established, measured path, and a player choosing "Hurt Me
+// Plenty" means that exact 30x16/99 board, not the hardest one that size can
+// be made to be. A mood has to reject boards and keep searching, which is the
+// opposite of what a preset should do.
+//
+// required      how many qualifying boards must be collected before one is picked
+// minSophisticated / minTopTier  a board qualifies only if its solution needed at
+//               least this many deductions of that tier or harder (see DEDUCTION_TIERS
+//               in solver.js for what the tiers mean)
+// pick          which of the collected boards to play:
+//                 first  the one that arrived first, cheapest possible search
+//                 second the median by difficulty, so neither the easiest nor the
+//                       nastiest of the batch is played
+//                 max    the hardest of the batch
+// budgetFactor  multiple of GENERATION_BUDGET_MS. Collecting N boards is N times
+//               the work, and the budget has to grow with it or a mood could
+//               never finish; the resulting wait is the trade-off of asking for
+//               a board that is actually hard.
+const SOLVER_MOODS = {
+  normal: {
+    label: 'Normal',
+    required: 1,
+    minSophisticated: 0,
+    minTopTier: 0,
+    pick: 'first',
+    budgetFactor: 1,
+  },
+  hard: {
+    label: 'Hard',
+    required: 3,
+    minSophisticated: 1,
+    minTopTier: 0,
+    pick: 'second',
+    budgetFactor: 3,
+  },
+  evil: {
+    label: 'Evil',
+    required: 5,
+    minSophisticated: 3,
+    minTopTier: 0,
+    pick: 'max',
+    budgetFactor: 5,
+  },
+  satan: {
+    label: 'Satan',
+    required: 10,
+    minSophisticated: 0,
+    minTopTier: 10,
+    pick: 'max',
+    budgetFactor: 10,
+  },
+};
+const DEFAULT_SOLVER_MOOD = 'normal';
+
+// A mood is only reachable on a custom board; see the note above.
+function isCustomDifficulty(difficulty) {
+  return difficulty === CUSTOM_DIFFICULTY;
+}
+
+/** The mood table entry for a value, falling back to Normal. */
+function solverMoodSpec(mood) {
+  return SOLVER_MOODS[mood] || SOLVER_MOODS[DEFAULT_SOLVER_MOOD];
+}
+
+/**
+ * The mood that actually applies, which is not always the saved one: a preset
+ * board is always Normal, whatever is stored.
+ */
+function effectiveSolverMood(difficulty, mood) {
+  return isCustomDifficulty(difficulty) ? solverMoodSpec(mood) : solverMoodSpec(DEFAULT_SOLVER_MOOD);
+}
+
 const DEFAULT_BOARD_CONFIG = {
   difficulty: 'expert',
   customCols: 30,
@@ -69,6 +144,7 @@ const DEFAULT_BOARD_CONFIG = {
   // seconds and several in parallel make the wait markedly shorter.
   multiThreaded: false,
   workerCount: 8,
+  solverMood: DEFAULT_SOLVER_MOOD,
 };
 
 // Live board dimensions. Declared with `let` rather than `const` because the
@@ -131,6 +207,14 @@ function sanitizeWorkerCount(count) {
   return Math.max(1, Math.min(MAX_GENERATION_WORKERS, n));
 }
 
+// A mood name from the settings dropdown. An unknown or missing value is Normal,
+// so a stale localStorage entry can never leave a board in a mood that does not
+// exist. Note this validates the *name* only: whether a mood is in force at all
+// is decided by effectiveSolverMood(), which also consults the difficulty.
+function sanitizeSolverMood(mood) {
+  return typeof mood === 'string' && SOLVER_MOODS[mood] ? mood : DEFAULT_SOLVER_MOOD;
+}
+
 function sanitizeBoardConfig(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
   const def = DEFAULT_BOARD_CONFIG;
@@ -152,6 +236,7 @@ function sanitizeBoardConfig(raw) {
     multiThreaded:
       typeof src.multiThreaded === 'boolean' ? src.multiThreaded : def.multiThreaded,
     workerCount: sanitizeWorkerCount(src.workerCount),
+    solverMood: sanitizeSolverMood(src.solverMood),
   };
 }
 

@@ -148,6 +148,91 @@ function applyMines(cells) {
   computeAdjacents();
 }
 
+// Reshapes a flat row-major candidate into the 2D form the solver reads, without
+// touching the live grid. Needed because a mood has to compare several candidate
+// boards before choosing one, so the candidates cannot be laid down as they
+// arrive the way the single-board path does.
+function candidateToGrid(cells) {
+  const out = new Array(ROWS);
+  for (let r = 0; r < ROWS; r++) {
+    const row = new Array(COLS);
+    for (let c = 0; c < COLS; c++) row[c] = cells[r * COLS + c];
+    out[r] = row;
+  }
+  return out;
+}
+
+/**
+ * Verify a candidate and report how hard it is, in one solve.
+ *
+ * Returns { difficulty } for a board that is solvable by deduction alone, or null
+ * for one that is not — the same accept/reject decision the single-board path
+ * makes, since it is the same solver. This runs on the main thread, which is why
+ * the worker path does it inside the worker instead.
+ */
+function assessCandidate(cells, excludeR, excludeC) {
+  const result = solveWithDifficulty(candidateToGrid(cells), excludeR, excludeC);
+  if (!result.solved) return null;
+  return { cells, difficulty: result.difficulty };
+}
+
+/** Whether a difficulty tally clears a mood's minimum for each tier. */
+function moodQualifies(difficulty, spec) {
+  if (spec.minSophisticated > 0 && countAtLeastTier(difficulty, 'sophisticated') < spec.minSophisticated) {
+    return false;
+  }
+  if (spec.minTopTier > 0 && countAtLeastTier(difficulty, 'top-tier') < spec.minTopTier) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Choose which of the collected boards to play, per the mood's pick rule.
+ *
+ * 'first' takes them in arrival order and is deliberately not a sort: Normal must
+ * cost nothing over the old behaviour, which played whatever verified first.
+ * 'second' and 'max' sort by score, and 'second' returns the median of a
+ * three-board batch so that neither the softest nor the nastiest board of the
+ * batch is the one that gets played.
+ */
+function selectByMood(collected, spec) {
+  if (spec.pick === 'first') return collected[0];
+  const byScore = collected.slice().sort((a, b) => a.difficulty.score - b.difficulty.score);
+  if (spec.pick === 'second') return byScore[Math.floor((byScore.length - 1) / 2)];
+  return byScore[byScore.length - 1];
+}
+
+/** Generation budget for a mood: collecting N boards is N times the work. */
+function moodBudgetMs(spec) {
+  return GENERATION_BUDGET_MS * Math.max(1, spec.budgetFactor || 1);
+}
+
+/**
+ * Tell the player how hard the board they were just handed is, and which
+ * deductions it took. Logged rather than shown on the board: the board is the
+ * game, and a difficulty badge in the corner of a Windows 98 window is a design
+ * decision nobody asked for. The numbers are the same ones the mood used to
+ * choose the board, so what is reported is what was actually required.
+ */
+function reportBoardDifficulty(difficulty, spec) {
+  if (!difficulty) return;
+  const techniques = (difficulty.used || []).join(', ');
+  const line =
+    `generateBoardSafe: ${spec.label} mood -> difficulty ${difficulty.score} ` +
+    `(${difficulty.percent}% non-basic of ${difficulty.moves} deductions); ` +
+    `tiers: ${difficulty.summary}; techniques: ${techniques}`;
+  if (spec.label === 'Normal') {
+    // Normal is the default and by far the most common case, so it stays quiet
+    // unless the board is actually hard, in which case it is worth knowing.
+    if (difficulty.tiers.sophisticated === 0 && difficulty.tiers['top-tier'] === 0) return;
+    console.info(line);
+    return;
+  }
+  console.info(line);
+}
+
+
 // Workers to race, and whether to race them at all. Multi-threaded generation
 // only means anything alongside no-guess boards — with no-guess off a board is a
 // single random draw and there is nothing to parallelise. The Worker check keeps
@@ -165,22 +250,32 @@ function useWorkerGeneration() {
 
 /**
  * Races generationWorkerCount() workers, each building and verifying its own
- * candidate, and takes the first board that passes. The moment one lands the
- * others are terminated mid-search: their results are no longer wanted, and on a
- * large board an abandoned search is real CPU the browser is still spending.
+ * candidate, and takes the first board that passes — or, for a mood above Normal,
+ * keeps collecting until it has enough qualifying boards to choose between.
  *
  * A worker only reports success after the independent solver has confirmed the
- * board, so the winner is used as-is. It is our own same-origin code doing that
- * check, so the main thread does not repeat it — re-verifying here would block
- * the main thread for exactly as long as the work was worth moving off it.
+ * board and measured its difficulty, so the result is used as-is. It is our own
+ * same-origin code doing that check, so the main thread does not repeat it —
+ * re-verifying here would block the main thread for exactly as long as the work
+ * was worth moving off it.
+ *
+ * Once the batch is decided the whole field is torn down, winners included: an
+ * abandoned search is real CPU the browser is still spending, and for a mood that
+ * means the workers that are no longer needed.
  *
  * Resolves true if a verified board was applied, false if the search ran out and
  * a random board was used instead. Never rejects.
  */
-function generateBoardInWorkers(excludeR, excludeC) {
+function generateBoardInWorkers(excludeR, excludeC, spec) {
   const count = generationWorkerCount();
+  // A null spec is a preset: no mood, so no batch, no minimum for the workers
+  // and no difficulty to report. The first board to arrive wins, exactly as it
+  // did before the mood feature existed.
+  const mooded = spec !== null;
+  const required = mooded ? spec.required : 1;
+  const budget = mooded ? moodBudgetMs(spec) : GENERATION_BUDGET_MS;
   const startTime = Date.now();
-  const deadline = startTime + GENERATION_BUDGET_MS;
+  const deadline = startTime + budget;
   const request = {
     type: 'generate',
     cols: COLS,
@@ -189,15 +284,24 @@ function generateBoardInWorkers(excludeR, excludeC) {
     startR: excludeR,
     startC: excludeC,
     openOnStart: boardConfig.openOnStart,
-    budgetMs: GENERATION_BUDGET_MS,
+    budgetMs: budget,
     candidateBudgetMs: GENERATION_CANDIDATE_BUDGET_MS,
+    // Whether the worker should measure difficulty at all, and if so the minimum
+    // a board must meet. Told to the worker so it can reject a board that does
+    // not meet the mood before posting it, rather than the main thread
+    // discarding a finished search and having to ask for another.
+    analyzeDifficulty: mooded,
+    minSophisticated: mooded ? spec.minSophisticated : 0,
+    minTopTier: mooded ? spec.minTopTier : 0,
   };
 
   return new Promise((resolve) => {
     const workers = [];
+    const collected = [];
     let pending = 0;
     let settled = false;
     let candidates = 0;
+    let rejected = 0;
     let lastReason = 'no workers';
     let timer = null;
 
@@ -217,15 +321,31 @@ function generateBoardInWorkers(excludeR, excludeC) {
       workers.length = 0;
     };
 
-    const finish = (cells) => {
+    // A mood chooses out of the batch; a preset just takes whichever board
+    // arrived, which is what the race did before moods existed.
+    const pickWinner = () => (mooded ? selectByMood(collected, spec) : collected[0]);
+
+    const finish = (chosen) => {
       if (settled) return;
       settled = true;
       cleanup();
-      if (cells) {
-        applyMines(cells);
+      if (chosen) {
+        if (mooded && required > 1 && collected.length < required) {
+          console.warn(
+            `generateBoardSafe: ${spec.label} mood asked for ${required} qualifying boards ` +
+              `and got ${collected.length} (${rejected} rejected as too easy) — ` +
+              `playing the best of those. Turn on multi-threaded generation to widen the search.`
+          );
+        }
+        applyMines(chosen.cells);
+        if (mooded) reportBoardDifficulty(chosen.difficulty, spec);
         resolve(true);
         return;
       }
+      // Nothing to show for the search, so the player still gets a playable
+      // board. This includes the case where no worker could be created at all:
+      // generateBoardSafe returns this promise directly, so handing back here
+      // would leave the grid empty rather than letting anything else try.
       warnNoGuessGaveUp(lastReason, candidates, Date.now() - startTime);
       placeMinesRandom(excludeR, excludeC);
       computeAdjacents();
@@ -236,6 +356,7 @@ function generateBoardInWorkers(excludeR, excludeC) {
     // worker that runs dry early says nothing about the others still searching.
     const workerDone = (msg) => {
       candidates += (msg && msg.candidates) || 0;
+      rejected += (msg && msg.rejected) || 0;
       if (msg && msg.reason) lastReason = msg.reason;
       if (--pending > 0) return;
       finish(null);
@@ -256,8 +377,34 @@ function generateBoardInWorkers(excludeR, excludeC) {
         const msg = e.data || {};
         if (settled) return;
         if (msg.type === 'board') {
-          // First verified board wins outright.
-          finish(msg.cells);
+          candidates++;
+          // The worker judges the mood, because it has already solved the board
+          // and re-judging here would mean solving it again. A board it marked
+          // rejected is not a candidate for the batch: it did its job and found
+          // a guess-free board, but one too easy for what was asked.
+          if (msg.rejected) {
+            rejected++;
+            try {
+              worker.postMessage(request);
+            } catch (e) {
+              workerDone({ reason: 'worker error' });
+            }
+            return;
+          }
+          collected.push({ cells: msg.cells, difficulty: msg.difficulty });
+          // Normal takes the first board outright. A mood needs a whole batch
+          // before it can pick, so it keeps the workers searching.
+          if (collected.length >= required) {
+            finish(pickWinner());
+            return;
+          }
+          // This worker has done what it was asked; send it looking again so the
+          // batch can still be filled once the others run out.
+          try {
+            worker.postMessage(request);
+          } catch (e) {
+            workerDone({ reason: 'worker error' });
+          }
           return;
         }
         workerDone(msg);
@@ -283,7 +430,9 @@ function generateBoardInWorkers(excludeR, excludeC) {
     timer = setTimeout(() => {
       if (settled) return;
       lastReason = 'budget';
-      finish(null);
+      // A partial batch is still the best board found: better than discarding
+      // real work and handing the player a random board.
+      finish(collected.length > 0 ? pickWinner() : null);
     }, Math.max(0, deadline - Date.now()));
   });
 }
@@ -318,44 +467,134 @@ function generateBoardInWorkers(excludeR, excludeC) {
  */
 async function generateBoardSafe(excludeR, excludeC) {
   if (boardConfig.noGuess) {
-    if (useWorkerGeneration()) return generateBoardInWorkers(excludeR, excludeC);
-    const deadline = Date.now() + GENERATION_BUDGET_MS;
-    const startTime = deadline - GENERATION_BUDGET_MS;
-    let candidates = 0;
-    let lastReason = 'budget';
+    // The solver mood is a custom-game feature, so it is resolved only for
+    // custom. Every preset keeps the generation path it had before moods
+    // existed: no mood spec, no difficulty accounting, no batch to fill, and
+    // nothing logged about the result. A preset is chosen by its size and mine
+    // count alone, and is not ours to re-rank.
+    const spec = isCustomDifficulty(boardConfig.difficulty)
+      ? effectiveSolverMood(boardConfig.difficulty, boardConfig.solverMood)
+      : null;
+    if (useWorkerGeneration()) return generateBoardInWorkers(excludeR, excludeC, spec);
 
-    while (Date.now() < deadline) {
-      const remaining = deadline - Date.now();
-      let res;
-      try {
-        res = await buildNoGuessCandidate({
-          cols: COLS,
-          rows: ROWS,
-          mines: MINES,
-          startR: excludeR,
-          startC: excludeC,
-          openOnStart: boardConfig.openOnStart,
-          budgetMs: Math.min(GENERATION_CANDIDATE_BUDGET_MS, remaining),
-        });
-      } catch (e) {
-        // Never let a fault in the vendored engine cost the player their click.
-        console.warn('generateBoardSafe: no-guess generation failed, using a random board.', e);
-        lastReason = 'engine error';
-        break;
-      }
-      if (!res.ok) {
-        lastReason = res.reason === 'board-limit' || res.reason === 'iteration-limit'
-          ? res.reason
-          : 'candidate budget';
-        break;
-      }
-      candidates++;
+    // Normal keeps the original loop: apply a candidate, verify it, stop at the
+    // first board that passes. A mood above Normal cannot work that way, because
+    // it has to choose between boards, so it collects a batch before touching the
+    // grid. Presets have no mood at all and share the Normal loop, one solve and
+    // no report.
+    if (!spec || spec.required === 1) {
+      const deadline = Date.now() + GENERATION_BUDGET_MS;
+      const startTime = deadline - GENERATION_BUDGET_MS;
+      let candidates = 0;
+      let lastReason = 'budget';
 
-      applyMines(res.cells);
-      if (isSolvable(grid, excludeR, excludeC)) return true;
+      while (Date.now() < deadline) {
+        const remaining = deadline - Date.now();
+        let res;
+        try {
+          res = await buildNoGuessCandidate({
+            cols: COLS,
+            rows: ROWS,
+            mines: MINES,
+            startR: excludeR,
+            startC: excludeC,
+            openOnStart: boardConfig.openOnStart,
+            budgetMs: Math.min(GENERATION_CANDIDATE_BUDGET_MS, remaining),
+          });
+        } catch (e) {
+          // Never let a fault in the vendored engine cost the player their click.
+          console.warn('generateBoardSafe: no-guess generation failed, using a random board.', e);
+          lastReason = 'engine error';
+          break;
+        }
+        if (!res.ok) {
+          lastReason = res.reason === 'board-limit' || res.reason === 'iteration-limit'
+            ? res.reason
+            : 'candidate budget';
+          break;
+        }
+        candidates++;
+
+        applyMines(res.cells);
+        if (!spec) {
+          if (isSolvable(grid, excludeR, excludeC)) return true;
+        } else {
+          // One solve serves both purposes: the same `solved` verdict the plain
+          // isSolvable() call gives, and the difficulty report.
+          const solved = solveWithDifficulty(grid, excludeR, excludeC);
+          if (solved.solved) {
+            reportBoardDifficulty(solved.difficulty, spec);
+            return true;
+          }
+        }
+      }
+
+      warnNoGuessGaveUp(lastReason, candidates, Date.now() - startTime);
+    } else {
+      const budget = moodBudgetMs(spec);
+      const deadline = Date.now() + budget;
+      const startTime = deadline - budget;
+      const collected = [];
+      let candidates = 0;
+      let rejected = 0;
+      let lastReason = 'budget';
+      let fatal = null;
+
+      while (collected.length < spec.required && !fatal && Date.now() < deadline) {
+        const remaining = deadline - Date.now();
+        let res;
+        try {
+          res = await buildNoGuessCandidate({
+            cols: COLS,
+            rows: ROWS,
+            mines: MINES,
+            startR: excludeR,
+            startC: excludeC,
+            openOnStart: boardConfig.openOnStart,
+            budgetMs: Math.min(GENERATION_CANDIDATE_BUDGET_MS, remaining),
+          });
+        } catch (e) {
+          // Never let a fault in the vendored engine cost the player their click.
+          console.warn('generateBoardSafe: no-guess generation failed, using a random board.', e);
+          lastReason = 'engine error';
+          fatal = e;
+          break;
+        }
+        if (!res.ok) {
+          lastReason = res.reason === 'board-limit' || res.reason === 'iteration-limit'
+            ? res.reason
+            : 'candidate budget';
+          // A degenerate board can never yield a batch, so stop rather than spin.
+          if (res.reason === 'board-limit' || res.reason === 'iteration-limit') break;
+          continue;
+        }
+        candidates++;
+
+        const assessed = assessCandidate(res.cells, excludeR, excludeC);
+        if (!assessed) continue; // not solvable by deduction: try another
+        if (!moodQualifies(assessed.difficulty, spec)) {
+          rejected++;
+          continue;
+        }
+        collected.push(assessed);
+      }
+
+      if (collected.length > 0) {
+        if (collected.length < spec.required) {
+          console.warn(
+            `generateBoardSafe: ${spec.label} mood asked for ${spec.required} qualifying boards ` +
+              `and got ${collected.length} (${rejected} rejected as too easy) — ` +
+              `playing the best of those. Turn on multi-threaded generation to widen the search.`
+          );
+        }
+        const chosen = selectByMood(collected, spec);
+        applyMines(chosen.cells);
+        reportBoardDifficulty(chosen.difficulty, spec);
+        return true;
+      }
+
+      warnNoGuessGaveUp(lastReason, candidates, Date.now() - startTime);
     }
-
-    warnNoGuessGaveUp(lastReason, candidates, Date.now() - startTime);
   }
 
   placeMinesRandom(excludeR, excludeC);

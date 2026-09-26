@@ -429,6 +429,12 @@ function applyBoardDisabled() {
     const ctrl = $workerRow.querySelector('input');
     if (ctrl) ctrl.disabled = !usable;
   }
+
+  // Solver mood is a custom-board setting: a preset is a fixed, named board, so
+  // there is nothing for a mood to choose. Disabled for the same reason as the
+  // size fields, and after the loop above for the same reason.
+  const $mood = document.getElementById('board-solver-mood');
+  if ($mood) $mood.disabled = multiplayer || !isCustom;
 }
 
 // Fills the difficulty dropdown from DIFFICULTIES, in preset order, then adds
@@ -451,6 +457,20 @@ function populateDifficultyOptions() {
   $select.appendChild(custom);
 }
 
+// Fills the mood dropdown from SOLVER_MOODS, in table order, so the labels the
+// player sees and the numbers the generator uses come from one list.
+function populateSolverMoodOptions() {
+  const $select = document.getElementById('board-solver-mood');
+  if (!$select) return;
+  $select.textContent = '';
+  for (const key of Object.keys(SOLVER_MOODS)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = SOLVER_MOODS[key].label;
+    $select.appendChild(opt);
+  }
+}
+
 function refreshBoardForm() {
   const cfg = getBoardConfig();
   const $difficulty = document.getElementById('board-difficulty');
@@ -461,6 +481,7 @@ function refreshBoardForm() {
   const $openOnStart = document.getElementById('board-open-on-start');
   const $multiThreaded = document.getElementById('board-multi-threaded');
   const $workerCount = document.getElementById('board-worker-count');
+  const $solverMood = document.getElementById('board-solver-mood');
   if ($difficulty) $difficulty.value = cfg.difficulty;
   if ($cols) $cols.value = cfg.customCols;
   if ($rows) $rows.value = cfg.customRows;
@@ -469,6 +490,7 @@ function refreshBoardForm() {
   if ($openOnStart) $openOnStart.checked = cfg.openOnStart;
   if ($multiThreaded) $multiThreaded.checked = cfg.multiThreaded;
   if ($workerCount) $workerCount.value = cfg.workerCount;
+  if ($solverMood) $solverMood.value = cfg.solverMood;
   applyBoardDisabled();
 }
 
@@ -499,7 +521,9 @@ const $boardNoGuess = document.getElementById('board-no-guess');
 const $boardOpenOnStart = document.getElementById('board-open-on-start');
 const $boardMultiThreaded = document.getElementById('board-multi-threaded');
 const $boardWorkerCount = document.getElementById('board-worker-count');
+const $boardSolverMood = document.getElementById('board-solver-mood');
 populateDifficultyOptions();
+populateSolverMoodOptions();
 if ($boardDifficulty) {
   $boardDifficulty.addEventListener('change', (e) => commitBoardConfig({ difficulty: e.target.value }));
 }
@@ -509,6 +533,9 @@ if ($boardOpenOnStart) {
 }
 if ($boardMultiThreaded) {
   $boardMultiThreaded.addEventListener('change', (e) => commitBoardConfig({ multiThreaded: e.target.checked }));
+}
+if ($boardSolverMood) {
+  $boardSolverMood.addEventListener('change', (e) => commitBoardConfig({ solverMood: e.target.value }));
 }
 if ($boardWorkerCount) {
   $boardWorkerCount.addEventListener('change', () =>

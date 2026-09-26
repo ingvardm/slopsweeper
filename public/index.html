@@ -241,6 +241,13 @@
               <span class="size-sep">/</span>
               <input type="number" id="board-mines" class="text-input custom-num custom-input" min="1" value="99" aria-label="Mines" title="Mines" />
             </div>
+            <!-- Custom boards only. The options are generated from SOLVER_MOODS in
+                 config.js by populateSolverMoodOptions() (ui.js) so the dropdown
+                 and the table cannot drift apart. -->
+            <div class="dlg-row custom-only mood-only">
+              <label class="dlg-label" for="board-solver-mood">Solver mood:</label>
+              <select id="board-solver-mood" class="theme-select"></select>
+            </div>
             <label class="settings-check" title="Redraw the board until the solver can finish it without ever guessing">
               <input type="checkbox" id="board-no-guess" /> <span>No-guess boards</span>
             </label>

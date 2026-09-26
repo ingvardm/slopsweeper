@@ -163,6 +163,43 @@ like 100×100/2000 does, and then roughly one first click in five exhausts the
 budget: the board is still valid and playable, just not guaranteed guess‑free,
 and the reason is logged to the console.
 
+### Solver mood (custom boards only)
+
+The no-guess generator can accept a board only if it *passes* a minimum, but that
+says nothing about how much work the player then has to do: some guess-free boards
+are decided by the opening flood fill and a handful of one-cell rules. **Solver
+mood** adds a difficulty target on top, and is offered for **custom boards only**.
+The five presets are chosen by their size and mine count and are deliberately left
+alone — no mood is resolved for them, no difficulty is measured, and generation
+runs exactly the path it ran before this setting existed.
+
+| Mood | Requires | Chooses |
+| --- | --- | --- |
+| Normal | nothing | the first verified board, as before |
+| Hard | 3 boards, each needing ≥1 sophisticated deduction | the middle one by score |
+| Evil | 5 boards, each needing ≥3 sophisticated deductions | the hardest |
+| Satan | 10 boards, each needing ≥10 top-tier deductions | the hardest |
+
+A *deduction* is one move the solver makes after the opening flood fill, and it is
+graded by the narrowest constraint that decided it: one or two cells is **basic**
+(a single-point rule), three is **sophisticated** (a subset rule), four or more is
+**top-tier** (hitting-set reasoning). A top-tier move also counts as sophisticated.
+Scores weight the tiers 1/4/12, which is what "the hardest" and "the middle" are
+measured against. A mood therefore cannot work the way Normal does — it has to
+choose *between* boards — so it collects a batch before touching the grid, and
+costs proportionally more: the budget is scaled 1×/3×/5×/10×
+`GENERATION_BUDGET_MS`.
+
+Both generation paths implement this. Single-threaded, the loop keeps drawing and
+verifying until the batch is full. With multi-threaded generation the minimum is
+sent to the workers in the request, so a worker rejects a too-easy board *before*
+posting it instead of the main thread discarding a finished search; a worker that
+runs dry is left alone while the others keep going, and the whole field is torn
+down once the batch fills. If the budget expires with a short batch, the best board
+found so far is played and the shortfall is logged, rather than discarding real work
+and handing back a random board. Every generated board's difficulty and the
+techniques its solution used are logged to the console.
+
 ## Credits
 
 The board generation model — the difficulty presets, the custom board sizing
