@@ -27,7 +27,42 @@ A classic **Minesweeper** implementation running entirely in the browser with a 
 
 - **Backend** (`server.js`)
   - Serves static assets from `public/`.
-  - Provides `/api/scores` endpoint (GET/POST) to read and write a simple JSON‑file‑based high‑score list (`scores.json`).
+  - Provides `/api/scores` (GET/POST/DELETE) for a JSON‑file‑based high‑score
+    list (`scores.json`). See [High scores](#high-scores).
+
+## High scores
+
+`scores.json` is an array of per‑difficulty buckets, one per ranked preset, and
+each bucket is a list of `{ playerInitials, timeInSeconds, date }` sorted fastest
+first. The bucket index is the difficulty's position in `DIFFICULTIES`
+(`public/js/config.js`), which is the single source of truth for both the order
+and the names:
+
+| Index | Difficulty | Board |
+| --- | --- | --- |
+| 0 | I'm Too Young To Die | 9×9 / 10 |
+| 1 | Hey, Not Too Rough | 16×16 / 40 |
+| 2 | Hurt Me Plenty | 30×16 / 99 |
+| 3 | Ultra-Violence | 30×30 / 225 |
+| 4 | Nightmare! | 30×30 / 250 |
+
+- `GET /api/scores?difficulty=N` returns that bucket's top 10. An out‑of‑range
+  index is a `400`; omitting it means `0`.
+- `POST /api/scores` takes the same `difficulty` in the body and appends to that
+  bucket only.
+- `DELETE /api/scores` resets every bucket by copying `init-scores.json`.
+
+**Custom boards are not ranked.** Their size is arbitrary, so a time would not be
+comparable with a preset's; winning one shows a "Board cleared" dialog instead of
+the initials prompt, and the leaderboard says so rather than displaying another
+difficulty's times.
+
+Older deployments may still have a flat list from before scores were split by
+difficulty (for example a Docker volume). The server migrates that shape on first
+read, keeping the entries under **Hurt Me Plenty** and logging what it moved, so
+no history is lost on upgrade. Malformed or partially written files are read
+defensively: invalid entries are dropped and missing buckets come back empty
+rather than failing the request.
 
 ## Board Generation
 
@@ -155,6 +190,7 @@ docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data ingvardm/mines
 - Shared state lives in `public/js/state.js`; keep `<script>` order in `index.html` (config → state → … → main).
 - `ROWS`/`COLS`/`MINES` are `let` globals in `config.js`, not `const` — the difficulty selector rewrites them. Read them at call time, never cache them at load time.
 - The Board groupbox is disabled during a LAN multiplayer match, since both peers must generate the same board.
+- Adding a sixth difficulty means touching four places, not one: `DIFFICULTIES` in `config.js` (which the dropdown is generated from), `DIFFICULTY_COUNT` and `DIFFICULTY_NAMES` in `server.js`, and the bucket count in both `init-scores.json` and `scores.json`. The score bucket index is the difficulty's position in `DIFFICULTIES`, so the two orders must stay in step or times get filed under the wrong name.
 - `npm test` is a placeholder; there is no test harness in the repo.
 
 ## Extending

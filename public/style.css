@@ -995,6 +995,28 @@ body {
 }
 .scores-list .score-time { text-align: right; font-variant-numeric: tabular-nums; }
 
+/* Shown instead of a list when there is nothing ranked to show (Custom
+   boards). Stops the row grid applying, and matches the :empty::after text. */
+.scores-list li.scores-notice {
+  display: block;
+  padding: 8px 4px;
+  color: var(--muted-text);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  border-bottom: none;
+}
+
+/* Note in the win dialog explaining that a Custom board is not ranked. */
+.win-note {
+  margin: 0 0 8px;
+  color: var(--modal-text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.win-note.hidden { display: none; }
+
 .modal-content {
   color: var(--modal-text);
   min-width: 260px;

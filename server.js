@@ -10,13 +10,45 @@ const HOST = process.env.HOST || '0.0.0.0';
 const scoresFile = process.env.SCORES_FILE || path.join(__dirname, 'scores.json');
 const initScoresFile = path.join(__dirname, 'init-scores.json');
 
+// The scores file is an array of per-difficulty buckets, one per ranked
+// preset, in the order the client numbers them (DIFFICULTIES in
+// public/js/config.js is the source of truth for that order and for the names):
+//
+//   0  I'm Too Young To Die   9x9 / 10
+//   1  Hey, Not Too Rough    16x16 / 40
+//   2  Hurt Me Plenty        30x16 / 99
+//   3  Ultra-Violence        30x30 / 225
+//   4  Nightmare!            30x30 / 250
+//
+// Custom boards are not ranked, so they have no bucket.
+const DIFFICULTY_COUNT = 5;
+// Kept in step with the names above purely for logging, so a mismatch with the
+// client shows up at boot instead of as a mislabelled leaderboard.
+const DIFFICULTY_NAMES = [
+  "I'm Too Young To Die",
+  'Hey, Not Too Rough',
+  'Hurt Me Plenty',
+  'Ultra-Violence',
+  'Nightmare!',
+];
+// Where scores from the old flat format land: Hurt Me Plenty, the preset the
+// seeded dev entries were played on.
+const LEGACY_BUCKET = 2;
+
+// A scores file with one empty array per difficulty.
+function emptyScoreBuckets() {
+  const buckets = [];
+  for (let i = 0; i < DIFFICULTY_COUNT; i++) buckets.push([]);
+  return buckets;
+}
+
 // Ensure scores.json exists by copying init-scores.json if missing.
 try {
   if (!fs.existsSync(scoresFile)) {
     if (fs.existsSync(initScoresFile)) {
       fs.copyFileSync(initScoresFile, scoresFile);
     } else {
-      fs.writeFileSync(scoresFile, JSON.stringify([]));
+      fs.writeFileSync(scoresFile, JSON.stringify(emptyScoreBuckets(), null, 2));
     }
   }
 } catch (err) {
@@ -57,7 +89,7 @@ try {
 }
 if (scoresWritable && !fs.existsSync(scoresFile)) {
   try {
-    fs.writeFileSync(scoresFile, JSON.stringify([]));
+    fs.writeFileSync(scoresFile, JSON.stringify(emptyScoreBuckets(), null, 2));
   } catch (err) {
     console.error(`Error creating scores file (${scoresFile}):`, err.code || err);
     console.error('Hint: ensure the mounted data dir is writable by uid 1000 (e.g. chown -R 1000:1000 <host dataset path>)');
@@ -65,14 +97,55 @@ if (scoresWritable && !fs.existsSync(scoresFile)) {
   }
 }
 
+// The scores file is an array of per-difficulty buckets; see DIFFICULTY_COUNT
+// at the top of this file for the bucket order. One score entry, dropping
+// anything that isn't the expected shape.
+function isValidScore(s) {
+  return !!s && typeof s === 'object' && typeof s.playerInitials === 'string' &&
+    s.playerInitials.length > 0 && typeof s.timeInSeconds === 'number' &&
+    Number.isFinite(s.timeInSeconds) && s.timeInSeconds > 0;
+}
+
+// Coerces whatever is on disk into exactly DIFFICULTY_COUNT buckets of valid
+// entries, so a malformed or older file can never crash a request.
+function normalizeScores(data) {
+  const buckets = [];
+  for (let i = 0; i < DIFFICULTY_COUNT; i++) buckets.push([]);
+
+  // A pre-difficulty file was a flat list of scores with no bucket of their own.
+  // Those entries are kept rather than dropped, and filed under the preset their
+  // times most likely came from, so an existing deployment (e.g. a Docker
+  // volume) keeps its history through the upgrade.
+  if (Array.isArray(data) && data.every(isValidScore)) {
+    buckets[LEGACY_BUCKET] = data.slice();
+    return { buckets, migratedLegacy: data.length > 0 };
+  }
+
+  if (Array.isArray(data)) {
+    for (let i = 0; i < Math.min(DIFFICULTY_COUNT, data.length); i++) {
+      if (Array.isArray(data[i])) buckets[i] = data[i].filter(isValidScore);
+    }
+  }
+  return { buckets, migratedLegacy: false };
+}
+
 // Helper to read scores safely
 function readScores() {
   try {
-    const data = fs.readFileSync(scoresFile, 'utf-8');
-    return JSON.parse(data);
+    const data = JSON.parse(fs.readFileSync(scoresFile, 'utf-8'));
+    const { buckets, migratedLegacy } = normalizeScores(data);
+    if (migratedLegacy) {
+      // Rewrite once so the migration is not repeated on every request.
+      console.log(
+        `Migrated ${buckets[LEGACY_BUCKET].length} score(s) from the old flat ` +
+          `format into "${DIFFICULTY_NAMES[LEGACY_BUCKET]}"`
+      );
+      writeScores(buckets);
+    }
+    return buckets;
   } catch (err) {
     console.error('Error reading scores:', err);
-    return [];
+    return emptyScoreBuckets();
   }
 }
 
@@ -87,45 +160,63 @@ function writeScores(scores) {
   }
 }
 
-// GET top 10 scores (sorted ascending by time)
+// Parses and range-checks a difficulty bucket index. The default keeps an
+// unparameterised request working (an old bookmarked URL, say) rather than
+// failing it.
+function parseDifficulty(value) {
+  if (value === undefined || value === null || value === '') return 0;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n >= DIFFICULTY_COUNT) return null;
+  return n;
+}
+
+// GET top 10 scores for one difficulty (sorted ascending by time)
 app.get('/api/scores', (req, res) => {
-  const scores = readScores();
-  const top = scores
+  const difficulty = parseDifficulty(req.query.difficulty);
+  if (difficulty === null) {
+    return res.status(400).json({ error: `difficulty must be 0..${DIFFICULTY_COUNT - 1}` });
+  }
+  const top = readScores()[difficulty]
     .slice()
     .sort((a, b) => a.timeInSeconds - b.timeInSeconds)
     .slice(0, 10);
   res.json(top);
 });
 
-// POST a new score
+// POST a new score into one difficulty's bucket
 app.post('/api/scores', (req, res) => {
   const { playerInitials, timeInSeconds, date } = req.body;
   if (
     typeof playerInitials !== 'string' ||
     playerInitials.length === 0 ||
     typeof timeInSeconds !== 'number' ||
+    !Number.isFinite(timeInSeconds) ||
     timeInSeconds <= 0 ||
     typeof date !== 'string'
   ) {
     return res.status(400).json({ error: 'Invalid score payload' });
   }
+  const difficulty = parseDifficulty(req.body.difficulty);
+  if (difficulty === null) {
+    return res.status(400).json({ error: `difficulty must be 0..${DIFFICULTY_COUNT - 1}` });
+  }
   const scores = readScores();
-  scores.push({ playerInitials, timeInSeconds, date });
+  scores[difficulty].push({ playerInitials, timeInSeconds, date });
   // Sort and keep all entries (client can fetch top 10)
-  scores.sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+  scores[difficulty].sort((a, b) => a.timeInSeconds - b.timeInSeconds);
   if (!writeScores(scores)) {
     return res.status(500).json({ error: 'Failed to write scores' });
   }
   res.status(201).json({ message: 'Score recorded' });
 });
 
-// DELETE all scores (reset)
+// DELETE all scores, every difficulty (reset)
 app.delete('/api/scores', (req, res) => {
   try {
     if (fs.existsSync(initScoresFile)) {
       fs.copyFileSync(initScoresFile, scoresFile);
     } else {
-      fs.writeFileSync(scoresFile, JSON.stringify([]));
+      fs.writeFileSync(scoresFile, JSON.stringify(emptyScoreBuckets(), null, 2));
     }
   } catch (err) {
     console.error('Error resetting scores file:', err);

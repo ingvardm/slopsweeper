@@ -187,5 +187,27 @@ function difficultyOptionLabel(key) {
   return `${preset.label} — ${preset.cols}x${preset.rows} / ${preset.mines}`;
 }
 
+// Ranked-difficulty index, which is also the bucket index in scores.json and
+// the `difficulty` value the scores API takes. The order comes from the
+// declaration order of DIFFICULTIES, so adding a preset there is all it takes.
+const DIFFICULTY_ORDER = Object.keys(DIFFICULTIES);
+
+// Returns the bucket index for a difficulty key, or -1 for Custom, which is
+// deliberately not ranked and so has no leaderboard.
+function difficultyIndex(key) {
+  return DIFFICULTY_ORDER.indexOf(key);
+}
+
+// Index of the difficulty currently being played, or -1 on Custom.
+function currentDifficultyIndex() {
+  return difficultyIndex(boardConfig.difficulty);
+}
+
+// Display name of the current difficulty; "Custom" is not a preset.
+function currentDifficultyLabel() {
+  const preset = DIFFICULTIES[boardConfig.difficulty];
+  return preset ? preset.label : 'Custom';
+}
+
 // Apply the persisted selection before anything else reads ROWS / COLS / MINES.
 applyBoardConfig();

@@ -183,10 +183,33 @@ function gameOver(won) {
         const stored = getStoredPlayerName().toUpperCase().slice(0, 3);
         if (stored) $initialsInput.value = stored;
       }
-      $modal.classList.remove('hidden');
-      $submitScore.onclick = () => submitScore(timeSec);
+      openWinModal(timeSec);
     }
   }
+}
+
+// The win dialog doubles as the high-score prompt. Only the five presets are
+// ranked, so on a Custom board the same dialog explains that the time is not
+// recorded and its button just dismisses it — the player still needs a way out
+// of the dialog, and still gets told the time.
+function openWinModal(timeSec) {
+  const ranked = typeof currentDifficultyIndex === 'function' && currentDifficultyIndex() >= 0;
+  const $legend = $modal.querySelector('.groupbox legend');
+  const $note = document.getElementById('win-note');
+  if ($legend) $legend.textContent = ranked ? 'New high score' : 'Board cleared';
+  if ($note) $note.classList.toggle('hidden', ranked);
+  $modal.classList.remove('hidden');
+  $submitScore.onclick = ranked
+    ? () => submitScore(timeSec)
+    : () => {
+        $modal.classList.add('hidden');
+        if (typeof loadScores === 'function') {
+          loadScores();
+          $leaderboardModal.classList.remove('hidden');
+        }
+      };
+  // The button is reused by both paths, so its label has to follow.
+  $submitScore.textContent = ranked ? 'Submit' : 'OK';
 }
 
 function checkVictory() {

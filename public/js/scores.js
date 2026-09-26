@@ -1,13 +1,31 @@
 // High-score API client: submit a victory time and render the leaderboard.
+//
+// Each ranked difficulty has its own top-10 list on the server, addressed by
+// the index of the preset (see DIFFICULTY_ORDER in config.js). Custom boards
+// are not ranked, so they neither read nor write a list.
+
+// Relabels the leaderboard so it is always clear which difficulty the times
+// belong to — times from a 9x9 and a 30x30 are not comparable.
+function updateScoresHeading() {
+  const $legend = document.querySelector('#leaderboard .groupbox legend');
+  if ($legend) $legend.textContent = `Fastest times — ${currentDifficultyLabel()}`;
+}
 
 function submitScore(timeSec) {
+  const difficulty = currentDifficultyIndex();
+  // Only reachable from the ranked flow, but guard anyway: a Custom win must
+  // never be filed under a preset it was not played on.
+  if (difficulty < 0) {
+    $modal.classList.add('hidden');
+    return;
+  }
   const initials = $initialsInput.value.trim().toUpperCase().slice(0, 3);
   if (!initials) return alert('Enter initials');
   if (typeof setStoredPlayerName === 'function') setStoredPlayerName(initials);
   fetch('/api/scores', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ playerInitials: initials, timeInSeconds: timeSec, date: new Date().toISOString() })
+    body: JSON.stringify({ playerInitials: initials, timeInSeconds: timeSec, date: new Date().toISOString(), difficulty })
   })
     .then(res => {
       if (!res.ok) throw new Error('Failed');
@@ -43,11 +61,28 @@ function appendScoreRow(s, rankText, extraClass) {
 // highlight (optional): the just-submitted { playerInitials, timeInSeconds }.
 // It is shown in red; when it missed the top 10 it is appended as an
 // unranked row (no rank number) instead.
+//
+// Always renders the list for the difficulty currently being played.
 function loadScores(highlight) {
-  fetch('/api/scores')
+  const difficulty = currentDifficultyIndex();
+  updateScoresHeading();
+  if (difficulty < 0) {
+    // Custom: nothing is ranked, so say so rather than showing another
+    // difficulty's times.
+    $scoresList.innerHTML = '';
+    const li = document.createElement('li');
+    li.className = 'scores-notice';
+    li.textContent = 'Custom boards are not ranked. Pick one of the five presets to keep a time.';
+    $scoresList.appendChild(li);
+    return;
+  }
+  fetch(`/api/scores?difficulty=${difficulty}`)
     .then(res => res.json())
     .then(scores => {
       $scoresList.innerHTML = '';
+      // An empty list is left empty on purpose: the stylesheet's
+      // .scores-list:empty::after already renders "No scores yet".
+      if (!Array.isArray(scores)) return;
       let marked = false;
       scores.forEach((s, i) => {
         const isNew = !!highlight && !marked &&
