@@ -902,7 +902,7 @@ body {
 }
 
 #settings-modal .modal-window { width: 420px; max-width: calc(100vw - 32px); }
-.scores-window { width: 380px; max-width: calc(100vw - 32px); }
+.scores-window { width: 440px; max-width: calc(100vw - 32px); }
 .net-window { width: 460px; max-width: calc(100vw - 32px); }
 
 #leaderboard { color: var(--modal-text); }
@@ -995,15 +995,49 @@ body {
 }
 .scores-list .score-time { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Shown instead of a list when there is nothing ranked to show (Custom
-   boards). Stops the row grid applying, and matches the :empty::after text. */
-.scores-list li.scores-notice {
-  display: block;
-  padding: 8px 4px;
-  color: var(--muted-text);
-  font-size: 12px;
+/* Difficulty tabs in the leaderboard, Windows 98 style: a raised strip of tabs
+   with the active one pressed in, sitting above the sunken list. */
+.tabs98 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 2px;
+  margin: 0 0 4px;
+}
+
+.tabs98 .tab98 {
   font-family: var(--font-ui);
-  border-bottom: none;
+  font-size: 11px;
+  line-height: 1.1;
+  padding: 4px 9px 5px;
+  background: var(--win-face);
+  color: var(--button-text);
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-highlight),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+/* Active tab: pressed in rather than raised. Nothing that affects the tab's box
+   size may change here -- no font-weight, no padding, no negative margin -- or
+   selecting a tab would resize it and shift its neighbours along the strip.
+   Selection is signalled by the bevel alone. */
+.tabs98 .tab98[aria-selected='true'] {
+  box-shadow:
+    inset 1px 1px var(--win-dark),
+    inset -1px -1px var(--win-highlight);
+}
+
+.tabs98 .tab98:hover:not([aria-selected='true']) {
+  background: var(--win-light);
+}
+
+.tabs98 .tab98:focus-visible {
+  outline: 1px dotted var(--button-text);
+  outline-offset: -4px;
 }
 
 /* Note in the win dialog explaining that a Custom board is not ranked. */

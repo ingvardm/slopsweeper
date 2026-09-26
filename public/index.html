@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="themes/forest.css?v=1" />
   <link rel="stylesheet" href="themes/candy.css?v=1" />
   <link rel="stylesheet" href="themes/mono.css?v=1" />
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
   <div class="desktop">
@@ -64,6 +64,9 @@
         <section id="leaderboard">
           <fieldset class="groupbox">
             <legend>Fastest times</legend>
+            <!-- One tab per ranked difficulty, built from DIFFICULTIES by
+                 populateScoreTabs() (scores.js). -->
+            <div id="scores-tabs" class="tabs98" role="tablist" aria-label="Difficulty"></div>
             <div class="scores-head" aria-hidden="true"><span>Rank</span><span>Player</span><span>Time</span></div>
             <ol id="scores-list" class="scores-list"></ol>
           </fieldset>

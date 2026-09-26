@@ -23,6 +23,7 @@ const $modal = document.getElementById('modal');
 const $initialsInput = document.getElementById('initials');
 const $submitScore = document.getElementById('submit-score');
 const $scoresList = document.getElementById('scores-list');
+const $scoresTabs = document.getElementById('scores-tabs');
 const $mainWindow = document.querySelector('.main-window');
 const $menuToggle = document.getElementById('menu-toggle');
 const $popupMenu = document.getElementById('popup-menu');

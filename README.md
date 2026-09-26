@@ -46,6 +46,13 @@ and the names:
 | 3 | Ultra-Violence | 30×30 / 225 |
 | 4 | Nightmare! | 30×30 / 250 |
 
+The leaderboard shows all five as a Windows 98 style tab strip, built from
+`DIFFICULTIES` by `populateScoreTabs()` in `public/js/scores.js` so a tab can never
+disagree with the preset it stands for. The tab for the difficulty being played is
+selected when the board opens; arrow keys, Home and End move between tabs, and only
+the selected tab is in the tab order. Switching tabs reuses a per‑difficulty cache
+(`scoreCache`), which the submit and reset paths clear when the data changes.
+
 - `GET /api/scores?difficulty=N` returns that bucket's top 10. An out‑of‑range
   index is a `400`; omitting it means `0`.
 - `POST /api/scores` takes the same `difficulty` in the body and appends to that
@@ -54,8 +61,8 @@ and the names:
 
 **Custom boards are not ranked.** Their size is arbitrary, so a time would not be
 comparable with a preset's; winning one shows a "Board cleared" dialog instead of
-the initials prompt, and the leaderboard says so rather than displaying another
-difficulty's times.
+the initials prompt. Since there is no Custom tab, the leaderboard preselects the
+first difficulty instead.
 
 Older deployments may still have a flat list from before scores were split by
 difficulty (for example a Docker volume). The server migrates that shape on first
@@ -190,7 +197,7 @@ docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data ingvardm/mines
 - Shared state lives in `public/js/state.js`; keep `<script>` order in `index.html` (config → state → … → main).
 - `ROWS`/`COLS`/`MINES` are `let` globals in `config.js`, not `const` — the difficulty selector rewrites them. Read them at call time, never cache them at load time.
 - The Board groupbox is disabled during a LAN multiplayer match, since both peers must generate the same board.
-- Adding a sixth difficulty means touching four places, not one: `DIFFICULTIES` in `config.js` (which the dropdown is generated from), `DIFFICULTY_COUNT` and `DIFFICULTY_NAMES` in `server.js`, and the bucket count in both `init-scores.json` and `scores.json`. The score bucket index is the difficulty's position in `DIFFICULTIES`, so the two orders must stay in step or times get filed under the wrong name.
+- Adding a sixth difficulty means touching four places, not one: `DIFFICULTIES` in `config.js` (which both the board dropdown and the leaderboard tab strip are generated from), `DIFFICULTY_COUNT` and `DIFFICULTY_NAMES` in `server.js`, and the bucket count in both `init-scores.json` and `scores.json`. The score bucket index is the difficulty's position in `DIFFICULTIES`, so the two orders must stay in step or times get filed under the wrong name.
 - `npm test` is a placeholder; there is no test harness in the repo.
 
 ## Extending

@@ -203,11 +203,5 @@ function currentDifficultyIndex() {
   return difficultyIndex(boardConfig.difficulty);
 }
 
-// Display name of the current difficulty; "Custom" is not a preset.
-function currentDifficultyLabel() {
-  const preset = DIFFICULTIES[boardConfig.difficulty];
-  return preset ? preset.label : 'Custom';
-}
-
 // Apply the persisted selection before anything else reads ROWS / COLS / MINES.
 applyBoardConfig();
