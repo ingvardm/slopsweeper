@@ -419,6 +419,26 @@ function applyBoardDisabled() {
   else $group.removeAttribute('title');
 }
 
+// Fills the difficulty dropdown from DIFFICULTIES, in preset order, then adds
+// Custom. Generated rather than hand-written in index.html because the labels
+// and the sizes live in one place; when a preset is added there is exactly one
+// list to update.
+function populateDifficultyOptions() {
+  const $select = document.getElementById('board-difficulty');
+  if (!$select) return;
+  $select.textContent = '';
+  for (const key of Object.keys(DIFFICULTIES)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = difficultyOptionLabel(key);
+    $select.appendChild(opt);
+  }
+  const custom = document.createElement('option');
+  custom.value = CUSTOM_DIFFICULTY;
+  custom.textContent = 'Custom';
+  $select.appendChild(custom);
+}
+
 function refreshBoardForm() {
   const cfg = getBoardConfig();
   const $difficulty = document.getElementById('board-difficulty');
@@ -461,6 +481,7 @@ function commitCustomSize() {
 const $boardDifficulty = document.getElementById('board-difficulty');
 const $boardNoGuess = document.getElementById('board-no-guess');
 const $boardOpenOnStart = document.getElementById('board-open-on-start');
+populateDifficultyOptions();
 if ($boardDifficulty) {
   $boardDifficulty.addEventListener('change', (e) => commitBoardConfig({ difficulty: e.target.value }));
 }

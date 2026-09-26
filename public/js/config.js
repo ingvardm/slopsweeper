@@ -3,18 +3,24 @@
 // it seeds the live ROWS / COLS / MINES globals that state.js reads while it
 // parses, and before board.js builds the grid.
 //
-// Adapted from JSMinesweeper by David N Hill (MIT). The difficulty presets
-// (9x9/10, 16x16/40, 30x16/99), the custom-size clamping rules and the
-// safe / "opening on start" first-click exclusion model follow that project.
-// See THIRD-PARTY-NOTICES.md for the full licence text.
+// Adapted from JSMinesweeper by David N Hill (MIT). Its first three difficulty
+// presets (9x9/10, 16x16/40, 30x16/99), the custom-size clamping rules and the
+// safe / "opening on start" first-click exclusion model follow that project;
+// Ultra-Violence and Nightmare! are additions of this project. See
+// THIRD-PARTY-NOTICES.md for the full licence text.
 
 const BOARD_CONFIG_KEY = 'slopsweeper.boardConfig';
 
-// Difficulty presets, keyed by the value used in the settings dropdown.
+// Difficulty presets, keyed by the value used in the settings dropdown. The
+// names are the classic Windows Minesweeper ones; the sizes are unchanged for
+// the three originals, and Ultra-Violence and Nightmare! are the two extra
+// steps, both 30x30 and progressively denser than Expert.
 const DIFFICULTIES = {
-  beginner: { cols: 9, rows: 9, mines: 10, label: 'Beginner' },
-  intermediate: { cols: 16, rows: 16, mines: 40, label: 'Intermediate' },
-  expert: { cols: 30, rows: 16, mines: 99, label: 'Expert' },
+  beginner: { cols: 9, rows: 9, mines: 10, label: "I'm Too Young To Die" },
+  intermediate: { cols: 16, rows: 16, mines: 40, label: 'Hey, Not Too Rough' },
+  expert: { cols: 30, rows: 16, mines: 99, label: 'Hurt Me Plenty' },
+  'ultra-violence': { cols: 30, rows: 30, mines: 225, label: 'Ultra-Violence' },
+  nightmare: { cols: 30, rows: 30, mines: 250, label: 'Nightmare!' },
 };
 const CUSTOM_DIFFICULTY = 'custom';
 
@@ -58,7 +64,13 @@ let ROWS = 16;
 let COLS = 30;
 let MINES = 99;
 
-let boardConfig = { ...DEFAULT_BOARD_CONFIG };
+// The live selection, hydrated from localStorage rather than defaulted, so a
+// saved choice is what the first board of a session actually uses. Calling the
+// hoisted getBoardConfig() here is safe: everything it depends on
+// (DEFAULT_BOARD_CONFIG, the size limits, the sanitizer) is initialised above.
+// Skipping this was a real bug — settings were written to localStorage and
+// shown correctly in the settings form, but every load built the default board.
+let boardConfig = getBoardConfig();
 
 // Number of cells the first click keeps mine-free, given the board size and
 // the "opening on start" preference: 1 for a plain safe start, the full 3x3
@@ -164,6 +176,15 @@ function syncBoardCssVars() {
 // Human-readable summary of the current board, e.g. "30x16 / 99".
 function describeBoard() {
   return `${COLS}x${ROWS} / ${MINES}`;
+}
+
+// Text for one entry in the difficulty dropdown, e.g.
+// "Hurt Me Plenty — 30x16 / 99". Derived from DIFFICULTIES so the dropdown and
+// the presets cannot drift apart the way a hand-written list of <option>s did.
+function difficultyOptionLabel(key) {
+  const preset = DIFFICULTIES[key];
+  if (!preset) return key;
+  return `${preset.label} — ${preset.cols}x${preset.rows} / ${preset.mines}`;
 }
 
 // Apply the persisted selection before anything else reads ROWS / COLS / MINES.

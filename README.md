@@ -35,11 +35,24 @@ Settings → Board controls the board shape and how it is generated. All of it i
 persisted in `localStorage` under `slopsweeper.boardConfig`, and any change
 starts a fresh board.
 
-- **Difficulty** – Beginner (9×9/10), Intermediate (16×16/40), Expert (30×16/99) or
-  Custom. Custom accepts 1–250 per axis; the mine count is clamped to what is
-  left of the board once the first‑click zone is reserved. The window and grid
-  tracks follow the board through the `--board-cols` / `--board-rows` custom
-  properties, so nothing in the CSS is hardcoded to 30×16.
+- **Difficulty** – one of five presets or Custom:
+
+  | Preset | Size | Mines |
+  | --- | --- | --- |
+  | I'm Too Young To Die | 9×9 | 10 |
+  | Hey, Not Too Rough | 16×16 | 40 |
+  | Hurt Me Plenty | 30×16 | 99 |
+  | Ultra-Violence | 30×30 | 225 |
+  | Nightmare! | 30×30 | 250 |
+
+  The preset list lives in `DIFFICULTIES` in `config.js` and the settings
+  dropdown is generated from it, so the labels and the sizes cannot drift apart.
+  Custom accepts 1–250 per axis; the mine count is clamped to what is left of
+  the board once the first‑click zone is reserved. The choice, the custom size
+  and both generation options are saved to `localStorage` and restored on the
+  next visit. The window and grid tracks follow the board through the
+  `--board-cols` / `--board-rows` custom properties, so nothing in the CSS is
+  hardcoded to 30×16.
 - **No‑guess boards** – when the option is on, a board is *proposed* by the
   vendored JSMinesweeper engine, which relocates mines where deduction stalls,
   and then *verified* by `solver.js` before it is used. With the option off the
