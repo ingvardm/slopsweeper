@@ -310,7 +310,7 @@ function mpTryStart() {
   }, 900);
 }
 
-function mpStartSeededMatch(seed) {
+async function mpStartSeededMatch(seed) {
   mpSeed = seed >>> 0;
   mpMatchStarted = true;
   mpMatchOver = false;
@@ -322,10 +322,12 @@ function mpStartSeededMatch(seed) {
   mpHideResult();
   initGrid();
   gameEnded = false;
-  generateBoardSafe(MP_FIRST_R, MP_FIRST_C);
-  startTimer();
-  firstClick = false; // board already generated; further clicks must not regen
-  revealCell(MP_FIRST_R, MP_FIRST_C);
+  // The opening cell is the centre of the standard 30x16 board; clamp it so a
+  // smaller custom board still has a cell to open on.
+  const firstR = Math.max(0, Math.min(ROWS - 1, MP_FIRST_R));
+  const firstC = Math.max(0, Math.min(COLS - 1, MP_FIRST_C));
+  await generateFirstBoard(firstR, firstC);
+  revealCell(firstR, firstC);
   // revealCell may have finished instantly in theory; status already updated
   // via mpOnLocalFinish. Otherwise broadcast the opening.
   mpUpdateHud();

@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="themes/forest.css?v=1" />
   <link rel="stylesheet" href="themes/candy.css?v=1" />
   <link rel="stylesheet" href="themes/mono.css?v=1" />
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
   <div class="desktop">
@@ -219,6 +219,32 @@
               <input type="text" id="settings-initials" class="text-input" maxlength="16" autocomplete="off" />
             </div>
           </fieldset>
+          <fieldset class="groupbox" id="board-groupbox">
+            <legend>Board</legend>
+            <div class="dlg-row">
+              <label class="dlg-label" for="board-difficulty">Difficulty:</label>
+              <select id="board-difficulty" class="theme-select">
+                <option value="beginner">Beginner — 9x9 / 10</option>
+                <option value="intermediate">Intermediate — 16x16 / 40</option>
+                <option value="expert">Expert — 30x16 / 99</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="dlg-row size-row custom-only">
+              <label class="dlg-label">Size:</label>
+              <input type="number" id="board-cols" class="text-input custom-num custom-input" min="1" max="250" value="30" aria-label="Columns" title="Columns (1-250)" />
+              <span class="size-sep">&times;</span>
+              <input type="number" id="board-rows" class="text-input custom-num custom-input" min="1" max="250" value="16" aria-label="Rows" title="Rows (1-250)" />
+              <span class="size-sep">/</span>
+              <input type="number" id="board-mines" class="text-input custom-num custom-input" min="1" value="99" aria-label="Mines" title="Mines" />
+            </div>
+            <label class="settings-check" title="Redraw the board until the solver can finish it without ever guessing">
+              <input type="checkbox" id="board-no-guess" /> <span>No-guess boards</span>
+            </label>
+            <label class="settings-check" title="Guarantee a mine-free 3x3 area around the first click, not just a safe cell">
+              <input type="checkbox" id="board-open-on-start" /> <span>Opening on start</span>
+            </label>
+          </fieldset>
           <fieldset class="groupbox">
             <legend>Gameplay</legend>
             <label class="settings-check" title="Left-click on a revealed number auto-chords when flags match">
@@ -272,6 +298,11 @@
           <p class="about-version">Version 1.5.1</p>
           <p class="about-text">This project is fully written by AI (opencode + free tier models) as a learning exercise. All code, design, and implementation were generated with the assistance of an AI coding agent.</p>
           <fieldset class="groupbox">
+            <legend>Credits</legend>
+            <p class="about-text">The no-guess board generator is built on <strong>JSMinesweeper</strong> by David N Hill, used under the MIT License. Its solver engine is included here unmodified, and the board model &mdash; difficulty presets, custom board sizing and the first-click safe / &ldquo;opening on start&rdquo; exclusion rules &mdash; is adapted from it.</p>
+            <p class="about-text"><a href="https://github.com/DavidNHill/JSMinesweeper" target="_blank" rel="noopener">github.com/DavidNHill/JSMinesweeper</a> — Copyright (c) 2022 David N Hill — <a href="https://github.com/ingvardm/slopsweeper/blob/main/THIRD-PARTY-NOTICES.md" target="_blank" rel="noopener">full licence text</a></p>
+          </fieldset>
+          <fieldset class="groupbox">
             <legend>Fonts</legend>
             <p class="about-text"><strong>Press Start 2P</strong> — <a href="https://fonts.google.com/specimen/Press+Start+2P" target="_blank" rel="noopener">Google Fonts</a> — licensed under the <a href="https://scripts.sil.org/OFL" target="_blank" rel="noopener">SIL Open Font License 1.1</a></p>
             <p class="about-text"><strong>Noto Color Emoji</strong> — <a href="https://fonts.google.com/noto/specimen/Noto+Color+Emoji" target="_blank" rel="noopener">Google Fonts</a> — licensed under the <a href="https://scripts.sil.org/OFL" target="_blank" rel="noopener">SIL Open Font License 1.1</a></p>
@@ -280,7 +311,7 @@
             <legend>Disclaimer</legend>
             <p class="about-text">This software is provided "as is", without warranty of any kind. The authors and contributors are not responsible for any damages arising from the use of this software. This project is not affiliated with Microsoft Corporation. "Slopsweeper" is a parody name used for humorous purposes only.</p>
           </fieldset>
-          <p class="about-text about-footer">Licensed under the ISC License. Source code available on GitHub: <a href="https://github.com/ingvardm/slopsweeper" target="_blank" rel="noopener">github.com/ingvardm/slopsweeper</a></p>
+          <p class="about-text about-footer">Licensed under the ISC License; the JSMinesweeper board-generation code is MIT licensed — see the Credits above. Source code available on GitHub: <a href="https://github.com/ingvardm/slopsweeper" target="_blank" rel="noopener">github.com/ingvardm/slopsweeper</a></p>
           <div class="button-row dlg-buttons">
             <button id="about-ok" class="win98-btn default-btn">OK</button>
           </div>
@@ -333,6 +364,23 @@
   <script src="js/state.js"></script>
   <script src="js/controls.js"></script>
   <script src="js/solver.js"></script>
+  <!-- No-guess board generation: vendored JSMinesweeper engine (David N Hill,
+       MIT) plus the adapter that drives it. Engine files are loaded in
+       upstream's own order; see js/vendor/jsminesweeper/PROVENANCE.md. -->
+  <script src="js/vendor/jsminesweeper/Board.js"></script>
+  <script src="js/vendor/jsminesweeper/Tile.js"></script>
+  <script src="js/vendor/jsminesweeper/solver_main.js"></script>
+  <script src="js/vendor/jsminesweeper/solver_probability_engine.js"></script>
+  <script src="js/vendor/jsminesweeper/Brute_force.js"></script>
+  <script src="js/vendor/jsminesweeper/BruteForceAnalysis.js"></script>
+  <script src="js/vendor/jsminesweeper/MinesweeperGame.js"></script>
+  <script src="js/vendor/jsminesweeper/SolutionCounter.js"></script>
+  <script src="js/vendor/jsminesweeper/EfficiencyHelper.js"></script>
+  <script src="js/vendor/jsminesweeper/FiftyFiftyHelper.js"></script>
+  <script src="js/vendor/jsminesweeper/LongTermRiskHelper.js"></script>
+  <script src="js/vendor/jsminesweeper/PrimeSieve.js"></script>
+  <script src="js/vendor/jsminesweeper/Binomial.js"></script>
+  <script src="js/noguess.js"></script>
   <script src="js/board.js"></script>
   <script src="js/gameplay.js"></script>
   <script src="js/ui.js"></script>

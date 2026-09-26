@@ -36,13 +36,35 @@ function isNumberedOpen(r, c) {
   return cell.revealed && cell.adjacent > 0;
 }
 
-function doLeftAction(r, c) {
+// True while a no-guess board is being built. Generation takes long enough on
+// big boards that further clicks must be ignored rather than interleave with it.
+let generatingBoard = false;
+
+// Builds the first board, showing a busy state while the solver works. Never
+// rejects: callers are event handlers that fire and forget, and a stuck game
+// would be worse than a board without the no-guess guarantee.
+async function generateFirstBoard(r, c) {
+  generatingBoard = true;
+  setGenerating(true);
+  try {
+    await generateBoardSafe(r, c);
+  } catch (e) {
+    console.warn('generateFirstBoard: generation failed, using a random board.', e);
+    placeMinesRandom(r, c);
+    computeAdjacents();
+  } finally {
+    generatingBoard = false;
+    setGenerating(false);
+  }
+  startTimer();
+  firstClick = false;
+}
+
+async function doLeftAction(r, c) {
   const cell = grid[r][c];
-  if (gameEnded) return;
+  if (gameEnded || generatingBoard) return;
   if (firstClick) {
-    generateBoardSafe(r, c);
-    startTimer();
-    firstClick = false;
+    await generateFirstBoard(r, c);
   }
   if (cell.revealed) {
     if (cell.adjacent > 0 && (getControls().leftChord || getControls().iPadMode)) chordCell(r, c);

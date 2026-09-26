@@ -1,9 +1,15 @@
-// Board setup: empty-grid construction plus the no-guess board generator.
+// Board setup: empty-grid construction plus the board generator.
+//
 // Mine placement uses uniform random sampling via Fisher-Yates shuffle,
-// excluding the first-click safety zone. Boards are validated for
-// opening size and solvability via the solver (solver.js).
+// excluding the first-click safety zone (see exclusionZoneSize in config.js).
+// No-guess boards are additionally validated for opening size and
+// solvability via the solver (solver.js).
+//
+// The exclusion-set placement model and the difficulty/size model are adapted
+// from JSMinesweeper by David N Hill (MIT) — see THIRD-PARTY-NOTICES.md.
 
 function initGrid() {
+  syncBoardCssVars();
   grid = Array.from({ length: ROWS }, () =>
     Array.from({ length: COLS }, () => ({
       mine: false,
@@ -79,13 +85,21 @@ function computeAdjacents() {
   }
 }
 
+// Radius of the mine-free zone around the first click: 0 for a plain safe
+// start (just the clicked cell), 1 for an "opening on start" board (the whole
+// 3x3 neighbourhood). Falls back to 0 on boards too small for the 3x3 zone.
+function exclusionRadius() {
+  return exclusionZoneSize(COLS, ROWS, boardConfig.openOnStart) > 1 ? 1 : 0;
+}
+
 function inSafetyZone(r, c, excludeR, excludeC) {
-  return Math.abs(r - excludeR) <= 1 && Math.abs(c - excludeC) <= 1;
+  const radius = exclusionRadius();
+  return Math.abs(r - excludeR) <= radius && Math.abs(c - excludeC) <= radius;
 }
 
 // Fisher-Yates shuffle: produce a uniformly random permutation of candidates,
-// then place mines at the first MINES positions. Excludes the 3×3 safety
-// zone around the first click.
+// then place mines at the first MINES positions. Excludes the first-click
+// safety zone, which is a single cell unless "opening on start" is enabled.
 function placeMinesRandom(excludeR, excludeC) {
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
@@ -97,110 +111,102 @@ function placeMinesRandom(excludeR, excludeC) {
       if (!inSafetyZone(r, c, excludeR, excludeC))
         candidates.push([r, c]);
 
+  // A very small board can leave fewer candidate cells than MINES asks for;
+  // place what fits rather than reading past the end of the array.
+  const count = Math.min(MINES, candidates.length);
+
   // Fisher-Yates shuffle in place
   for (let i = candidates.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
   }
 
-  for (let i = 0; i < MINES; i++) {
+  for (let i = 0; i < count; i++) {
     const [r, c] = candidates[i];
     grid[r][c].mine = true;
   }
 }
 
-// Flood-fill from the first click over safe cells, mirroring revealCell:
-// expands through zero-adjacent cells, stops at numbers. Returns the boolean
-// grid of the opening (exactly the cells the first click would reveal).
-function computeOpeningSet(startR, startC) {
-  const seen = [];
-  for (let r = 0; r < ROWS; r++) {
-    seen.push([]);
-    for (let c = 0; c < COLS; c++) seen[r].push(false);
-  }
-  const stack = [{ r: startR, c: startC }];
-  while (stack.length > 0) {
-    const cur = stack.pop();
-    const r = cur.r;
-    const c = cur.c;
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
-    if (seen[r][c] || grid[r][c].mine) continue;
-    seen[r][c] = true;
-    if (grid[r][c].adjacent === 0) {
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          stack.push({ r: r + dr, c: c + dc });
-        }
-      }
-    }
-  }
-  return seen;
-}
-
-function openingSize(opening) {
-  let n = 0;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (opening[r][c]) n++;
-    }
-  }
-  return n;
-}
-
-function openingInRange(n) {
-  return n >= OPENING_MIN_CELLS && n <= OPENING_MAX_CELLS;
-}
-
-function snapshotMines() {
-  const out = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (grid[r][c].mine) out.push([r, c]);
-    }
-  }
-  return out;
-}
-
-function restoreMines(coords) {
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) grid[r][c].mine = false;
-  }
-  for (let i = 0; i < coords.length; i++) {
-    grid[coords[i][0]][coords[i][1]].mine = true;
-  }
+// Logs why no guaranteed no-guess board could be produced. The board handed back
+// is still valid, it just is not guaranteed solvable without guessing.
+function warnNoGuessGaveUp(reason, candidates, elapsedMs) {
+  console.warn(
+    `generateBoardSafe: no verified no-guess board on ${describeBoard()} ` +
+      `(${reason}; ${candidates} candidate(s), ${elapsedMs}ms) — using a random board instead.`
+  );
 }
 
 /*
- * No-Guess Board Generator.
- * 1. Place mines uniformly at random via Fisher-Yates shuffle,
- *    excluding the 3x3 safety zone around the first click.
- * 2. Validate opening size (26-39 cells revealed on first click).
- * 3. Validate solvability via the constraint-propagation solver.
- * 4. Reject and regenerate if either check fails.
+ * Board Generator.
  *
- * This generator NEVER returns an unsolvable board. It keeps trying
- * until a solvable board is found.
+ * With no-guess mode on this asks the vendored JSMinesweeper engine (see
+ * noguess.js) to propose a board, then keeps it only if solver.js confirms it
+ * can be solved from the first click by deduction alone. Both halves matter:
+ *
+ * - Proposing by relocating mines is what makes dense boards possible. Searching
+ *   for a good board by redrawing cannot work: on 30x30/250 no randomly placed
+ *   layout is solvable by pure deduction (measured 0 of 25).
+ * - Verifying separately is what makes the promise true. The engine's own model
+ *   is mutated by every mine relocation, so it reaches "won" using information a
+ *   player never gets; measured, 0 of 7 of its 30x16/99 and 30x30/250 boards were
+ *   actually guess-free. Roughly half of its candidates pass the independent
+ *   check, so a few attempts are normal.
+ *
+ * With no-guess mode off a single random draw is taken, so games start instantly.
+ *
+ * A valid board is always left on the grid. If no candidate can be verified
+ * within the budget — or the board is so small that none can exist, such as
+ * 2x2/1 where every cell touches every other — this falls back to a random
+ * board rather than stalling the click.
  */
-function generateBoardSafe(excludeR, excludeC) {
-  let attempt = 0;
-  while (true) {
-    attempt++;
-    placeMinesRandom(excludeR, excludeC);
-    computeAdjacents();
+async function generateBoardSafe(excludeR, excludeC) {
+  if (boardConfig.noGuess) {
+    const deadline = Date.now() + GENERATION_BUDGET_MS;
+    const startTime = deadline - GENERATION_BUDGET_MS;
+    let candidates = 0;
+    let lastReason = 'budget';
 
-    const opening = computeOpeningSet(excludeR, excludeC);
-    const size = openingSize(opening);
+    while (Date.now() < deadline) {
+      const remaining = deadline - Date.now();
+      let res;
+      try {
+        res = await buildNoGuessCandidate({
+          cols: COLS,
+          rows: ROWS,
+          mines: MINES,
+          startR: excludeR,
+          startC: excludeC,
+          openOnStart: boardConfig.openOnStart,
+          budgetMs: Math.min(GENERATION_CANDIDATE_BUDGET_MS, remaining),
+        });
+      } catch (e) {
+        // Never let a fault in the vendored engine cost the player their click.
+        console.warn('generateBoardSafe: no-guess generation failed, using a random board.', e);
+        lastReason = 'engine error';
+        break;
+      }
+      if (!res.ok) {
+        lastReason = res.reason === 'board-limit' || res.reason === 'iteration-limit'
+          ? res.reason
+          : 'candidate budget';
+        break;
+      }
+      candidates++;
 
-    // Opening must be large enough to give the player information
-    if (!openingInRange(size)) continue;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          grid[r][c].mine = res.cells[r * COLS + c].mine;
+        }
+      }
+      computeAdjacents();
 
-    // Board must be solvable without guessing
-    if (isSolvable(grid, excludeR, excludeC)) return;
-
-    // Safety: prevent infinite loop in extremely unlikely edge case
-    if (attempt > 10000) {
-      throw new Error(`generateBoardSafe: could not find solvable board after ${attempt} attempts`);
+      if (isSolvable(grid, excludeR, excludeC)) return true;
     }
+
+    warnNoGuessGaveUp(lastReason, candidates, Date.now() - startTime);
   }
+
+  placeMinesRandom(excludeR, excludeC);
+  computeAdjacents();
+  return false;
 }

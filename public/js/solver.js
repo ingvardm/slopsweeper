@@ -1,6 +1,14 @@
 // Logical solver: decides whether a board is solvable by deduction alone,
-// without guessing. Used by the board generator (board.js) to validate
-// candidate boards. Never mutates the board passed in.
+// without guessing. Used as the acceptance test for boards proposed by the
+// no-guess generator (see noguess.js and board.js).
+//
+// "Solvable without guessing" is always relative to the strength of the solver,
+// so these limits are the definition. MAX_ENUM_CELLS is the important one:
+// frontier components larger than this are not enumerated exactly and the board
+// is reported unsolvable, which makes the check conservative. At 20 it rejected
+// boards a player could in fact deduce, and no-guess generation stalled on
+// larger custom boards; 45 keeps the check honest without that cost. Raising it
+// further widens what counts as solvable, at the price of time.
 
 /**
  * Determine if a board can be solved entirely by logical deduction.
@@ -16,9 +24,9 @@ function isSolvable(board, startR, startC) {
 // Core solver. Returns { solved, revealed } where revealed is the boolean
 // grid of what the logical solver could uncover. Never mutates `board`.
 function analyzeBoard(board, startR, startC) {
-  const MAX_ENUM_CELLS = 20; // max frontier-component size to enumerate exactly
-  const MAX_SOL_ENUM = 400; // solution cap per component enumeration
-  const MAX_ROUNDS = 300;
+  const MAX_ENUM_CELLS = 45; // max frontier-component size to enumerate exactly
+  const MAX_SOL_ENUM = 2000; // solution cap per component enumeration
+  const MAX_ROUNDS = 2000;
 
   const mineAt = (r, c) => board[r][c].mine;
   const adjAt = (r, c) => board[r][c].adjacent;

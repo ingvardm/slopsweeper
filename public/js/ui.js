@@ -1,6 +1,19 @@
 // Presentation layer: status emoji, timer, mine counter, number colors,
 // and theme switching. No game rules live here.
 
+// Busy state while a no-guess board is being built. The solver runs on the main
+// thread, so without this the board would look dead for a few hundred ms.
+function setGenerating(on) {
+  const $grid = document.getElementById('grid');
+  if ($grid) $grid.classList.toggle('generating', !!on);
+  const $status = document.getElementById('status-emoji');
+  // A waiting face reads better than a smile that does nothing.
+  if ($status) $status.dataset.face = on ? 'wait' : 'smile';
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.classList.toggle('is-generating', !!on);
+  }
+}
+
 function updateStatusEmoji(state) {
   const $status = document.getElementById('status-emoji');
   // Pure-CSS faces: JS only sets data-face, the theme owns the glyph.
@@ -137,6 +150,14 @@ if ($themeSelect) $themeSelect.addEventListener('change', (e) => setTheme(e.targ
   refreshThemeSelect();
 })();
 
+// Any change to the board shape or the generation policy invalidates the game
+// in progress, so rebuild the grid and wait for a fresh first click. Board
+// dimensions live in config.js, so this picks up the new size.
+function restartBoard() {
+  initGrid();
+  gameEnded = false;
+}
+
 // Make the face button start a new game (same seed rematch in multiplayer)
 $statusEmoji.addEventListener('click', () => {
   if (typeof mpIsMultiplayer === 'function' && mpIsMultiplayer() && mpSeed !== null) {
@@ -145,8 +166,7 @@ $statusEmoji.addEventListener('click', () => {
       return;
     }
   }
-  initGrid();
-  gameEnded = false;
+  restartBoard();
 });
 
 // High-scores pop-up (Win98 window) open/close wiring
@@ -321,6 +341,7 @@ function openSettings() {
   refreshThemeSelect();
   refreshSizeButtons();
   refreshControlsForm();
+  refreshBoardForm();
   const $in = document.getElementById('settings-initials');
   if ($in) {
     $in.value = (typeof mpLocalName === 'string' && mpLocalName) ||
@@ -376,6 +397,86 @@ function submitSettings() {
   saveSettingsName();
   closeSettings();
 }
+// ---- Settings: Board (difficulty, custom size, generation policy) ----
+// Single source of truth for which Board controls are editable, because two
+// independent passes would clobber each other: the whole group is locked
+// during a LAN multiplayer match (both peers must generate the same board, so
+// neither the shape nor the generation policy can change halfway through one),
+// and the size fields are only meaningful on the custom preset.
+function applyBoardDisabled() {
+  const multiplayer = typeof mpIsMultiplayer === 'function' && mpIsMultiplayer();
+  const isCustom = boardConfig.difficulty === 'custom';
+  const $group = document.getElementById('board-groupbox');
+  if (!$group) return;
+  $group.querySelectorAll('input, select').forEach(ctrl => {
+    ctrl.disabled = multiplayer || (ctrl.classList.contains('custom-input') && !isCustom);
+  });
+  document.querySelectorAll('.custom-only').forEach(el => {
+    el.style.opacity = isCustom && !multiplayer ? '' : '0.45';
+  });
+  $group.style.opacity = multiplayer ? '0.45' : '';
+  if (multiplayer) $group.title = 'Locked during a multiplayer game';
+  else $group.removeAttribute('title');
+}
+
+function refreshBoardForm() {
+  const cfg = getBoardConfig();
+  const $difficulty = document.getElementById('board-difficulty');
+  const $cols = document.getElementById('board-cols');
+  const $rows = document.getElementById('board-rows');
+  const $mines = document.getElementById('board-mines');
+  const $noGuess = document.getElementById('board-no-guess');
+  const $openOnStart = document.getElementById('board-open-on-start');
+  if ($difficulty) $difficulty.value = cfg.difficulty;
+  if ($cols) $cols.value = cfg.customCols;
+  if ($rows) $rows.value = cfg.customRows;
+  if ($mines) $mines.value = cfg.customMines;
+  if ($noGuess) $noGuess.checked = cfg.noGuess;
+  if ($openOnStart) $openOnStart.checked = cfg.openOnStart;
+  applyBoardDisabled();
+}
+
+// Writes a board-config change through setBoardConfig (which re-derives the
+// live ROWS / COLS / MINES) and starts a fresh board. refreshBoardForm runs
+// afterwards so the form shows the clamped values that were really applied.
+function commitBoardConfig(patch) {
+  setBoardConfig(patch);
+  refreshBoardForm();
+  restartBoard();
+}
+
+// Custom size inputs commit on change. Out-of-range entries are clamped by
+// sanitizeBoardSize and written back, so the form always matches the board.
+function commitCustomSize() {
+  const $cols = document.getElementById('board-cols');
+  const $rows = document.getElementById('board-rows');
+  const $mines = document.getElementById('board-mines');
+  commitBoardConfig({
+    customCols: Number($cols.value),
+    customRows: Number($rows.value),
+    customMines: Number($mines.value),
+  });
+}
+
+const $boardDifficulty = document.getElementById('board-difficulty');
+const $boardNoGuess = document.getElementById('board-no-guess');
+const $boardOpenOnStart = document.getElementById('board-open-on-start');
+if ($boardDifficulty) {
+  $boardDifficulty.addEventListener('change', (e) => commitBoardConfig({ difficulty: e.target.value }));
+}
+if ($boardNoGuess) $boardNoGuess.addEventListener('change', (e) => commitBoardConfig({ noGuess: e.target.checked }));
+if ($boardOpenOnStart) {
+  $boardOpenOnStart.addEventListener('change', (e) => commitBoardConfig({ openOnStart: e.target.checked }));
+}
+['board-cols', 'board-rows', 'board-mines'].forEach(id => {
+  const $el = document.getElementById(id);
+  if ($el) $el.addEventListener('change', commitCustomSize);
+});
+
+// Reflect the persisted board config on load, so the form is already correct
+// the first time Settings is opened rather than only after a change event.
+refreshBoardForm();
+
 // ---- Settings: Gameplay (button scheme) + Keyboard shortcuts ----
 function refreshControlsForm() {
   const c = getControls();

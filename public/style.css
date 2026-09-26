@@ -190,16 +190,16 @@ body {
 .main-window {
   display: flex;
   flex-direction: column;
-  width: min(calc(100vw - 16px), calc((100vh - 170px) * 30 / 16));
-  width: min(calc(100vw - 16px), calc((100dvh - 170px) * 30 / 16));
+  width: min(calc(100vw - 16px), calc((100vh - 170px) * var(--board-cols, 30) / var(--board-rows, 16)));
+  width: min(calc(100vw - 16px), calc((100dvh - 170px) * var(--board-cols, 30) / var(--board-rows, 16)));
   margin: 0 auto;
 }
 
-/* Restored (windowed) state — Win98-style fixed window: 24px cells on the
-   30x16 expert board ≈ 720px board + chrome. Centered on the desktop.
-   Toggled from Settings → Board (Normal). */
+/* Restored (windowed) state — Win98-style fixed window: 24px cells plus
+   chrome, so the window tracks the board instead of assuming 30 columns.
+   Centered on the desktop. Toggled from Settings → Display (Normal). */
 .main-window.restored {
-  width: 754px;
+  width: calc(24px * var(--board-cols, 30) + 34px);
   max-width: calc(100vw - 16px);
   margin: 24px auto 0;
 }
@@ -424,6 +424,16 @@ body {
 #status-emoji[data-face="won"]::after { content: var(--glyph-face-won); }
 #status-emoji[data-face="lost"]::after { content: var(--glyph-face-lost); }
 #status-emoji[data-face="suspense"]::after { content: var(--glyph-face-suspense); }
+/* Shown while a no-guess board is being solved. */
+#status-emoji[data-face="wait"]::after { content: var(--glyph-face-wait, "⏳"); }
+
+/* Building a no-guess board blocks the main thread between solver steps, so the
+   grid is visibly inert until it finishes. */
+.grid.generating {
+  cursor: progress;
+  pointer-events: none;
+  opacity: 0.75;
+}
 
 /* Disabled in multiplayer (new game would desync the match) — must render
    exactly like the enabled button: browsers gray out :disabled controls via
@@ -673,6 +683,34 @@ body {
   pointer-events: none;
 }
 
+/* Custom board size row (Settings → Board): three compact number fields.
+   Overrides the 3-column .dlg-row grid, which would wrap this many children. */
+.size-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.size-row .dlg-label { margin-right: 4px; }
+
+.custom-num {
+  max-width: 62px;
+  text-align: center;
+  text-transform: none;
+  -moz-appearance: textfield;
+}
+.custom-num::-webkit-outer-spin-button,
+.custom-num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.size-sep {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--modal-text);
+  padding: 0 1px;
+}
+
 .key-fields {
   display: flex;
   gap: 10px;
@@ -758,13 +796,13 @@ body {
 
 #grid {
   display: grid;
-  grid-template-columns: repeat(30, 1fr);
-  grid-template-rows: repeat(16, 1fr);
+  grid-template-columns: repeat(var(--board-cols, 30), 1fr);
+  grid-template-rows: repeat(var(--board-rows, 16), 1fr);
   gap: 0;
   background: var(--win-shadow);
   border: none;
   width: 100%;
-  aspect-ratio: 30 / 16;
+  aspect-ratio: var(--board-cols, 30) / var(--board-rows, 16);
   touch-action: manipulation;
   position: relative;
   overflow: hidden;
