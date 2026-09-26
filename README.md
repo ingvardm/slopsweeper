@@ -101,6 +101,11 @@ starts a fresh board.
   first draw is taken as is and the game starts instantly.
 - **Opening on start** – the first click is guaranteed a mine‑free 3×3 area
   rather than just a safe cell.
+- **Multi‑threaded generation** – off by default. When on, the propose‑and‑verify
+  work runs in web workers racing each other instead of one candidate at a time on
+  the main thread. It needs *No‑guess boards*, since with that off there is
+  nothing to parallelise; **Workers** sets how many to start (1–32, default 8)
+  and is dimmed while the feature is off.
 
 Why both halves. Proposing by relocating mines is what makes dense boards
 possible at all: on a 30×30 board with 250 mines, *no* randomly placed layout is
@@ -109,6 +114,45 @@ cannot succeed. Verifying separately is what makes the promise true: the
 engine's internal model is rewritten by every relocation, so it reaches “solved”
 using information a player never gets. Roughly half of its candidates survive an
 independent check, so a few attempts per board are normal.
+
+### Multi-threaded generation
+
+`gen-worker.js` is a classic worker that `importScripts` the same vendored engine,
+`noguess.js` and `solver.js` the main thread runs — the same files, not a second
+copy free to drift. Each worker owns the whole pipeline for one attempt,
+verification included, because verifying on the main thread would block the very
+UI the workers exist to keep responsive. A worker only reports a board after
+`solver.js` has confirmed it, so the first message the main thread receives is
+final: it is applied immediately and every other worker is `terminate()`d
+mid-search.
+
+A worker retries while the overall budget allows rather than giving up after its
+first candidate, which is what makes the race worth having — on a large board a
+single attempt routinely needs longer than `GENERATION_CANDIDATE_BUDGET_MS`, and
+without the retry every worker failed at the same instant. Boards so small that
+no no-guess layout exists (2×2/1) hit the engine's board limit instead and stop
+at once. If no worker wins, no worker can be created, or a worker faults, the
+click still lands on a valid random board as before.
+
+Measured on 18 cores with the identical pipeline in N OS threads, median of
+three:
+
+| Board | 1 thread | 2 | 4 | 8 |
+| --- | --- | --- | --- | --- |
+| 30×30/250 (Nightmare!) | 1814 ms | 499 ms | 599 ms | **326 ms** |
+| 60×40/700 | 20043 ms | 20054 ms | 20059 ms | 20073 ms |
+| 100×100/2000 | 20038 ms | 15862 ms | 9494 ms | 13986 ms |
+
+Read that honestly. On the presets, where a verified board normally lands in a few
+hundred milliseconds, workers cut the wait several‑fold — that is the case the
+setting is for. On 60×40/700 nothing verifies at any thread count, so the workers
+burn the full budget and the random fallback is used, exactly as the
+single‑threaded path does after one candidate: same board, but the wait is the
+whole budget rather than one candidate slice. On 100×100/2000 the result is
+genuinely better with workers (one 8‑thread run found a verified board in 3.5 s
+where a single thread never did) but the spread is wide, because it depends on
+whether a lucky attempt comes up. The app bounds all of this with
+`GENERATION_BUDGET_MS`, so a first click can never wait longer than that.
 
 The search is bounded by `GENERATION_BUDGET_MS` and
 `GENERATION_CANDIDATE_BUDGET_MS` in `config.js`, and it yields to the event loop
@@ -197,6 +241,8 @@ docker run -d --name slopsweeper -p 3000:3000 -v scores:/app/data ingvardm/mines
 - Shared state lives in `public/js/state.js`; keep `<script>` order in `index.html` (config → state → … → main).
 - `ROWS`/`COLS`/`MINES` are `let` globals in `config.js`, not `const` — the difficulty selector rewrites them. Read them at call time, never cache them at load time.
 - The Board groupbox is disabled during a LAN multiplayer match, since both peers must generate the same board.
+- `MAX_GENERATION_WORKERS` lives in `config.js`, not `board.js`, on purpose: the board-config sanitizer reads it and runs during `config.js`'s own load, so a `const` in the later `board.js` would be in its temporal dead zone and throw.
+- Anything the worker needs must reach it as data. `gen-worker.js` cannot read `config.js` (it touches the DOM), so budgets and board dimensions are sent in the `generate` message and installed as the globals the vendored engine and `solver.js` already expect.
 - Adding a sixth difficulty means touching four places, not one: `DIFFICULTIES` in `config.js` (which both the board dropdown and the leaderboard tab strip are generated from), `DIFFICULTY_COUNT` and `DIFFICULTY_NAMES` in `server.js`, and the bucket count in both `init-scores.json` and `scores.json`. The score bucket index is the difficulty's position in `DIFFICULTIES`, so the two orders must stay in step or times get filed under the wrong name.
 - `npm test` is a placeholder; there is no test harness in the repo.
 

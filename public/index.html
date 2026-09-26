@@ -247,6 +247,13 @@
             <label class="settings-check" title="Guarantee a mine-free 3x3 area around the first click, not just a safe cell">
               <input type="checkbox" id="board-open-on-start" /> <span>Opening on start</span>
             </label>
+            <label class="settings-check" title="Build candidate boards in web workers racing each other, and use the first that verifies. The rest are discarded. Needs no-guess boards; off means one board at a time on the main thread">
+              <input type="checkbox" id="board-multi-threaded" /> <span>Multi-threaded generation</span>
+            </label>
+            <div class="dlg-row worker-only">
+              <label class="dlg-label" for="board-worker-count">Workers:</label>
+              <input type="number" id="board-worker-count" class="text-input custom-num" min="1" max="32" step="1" value="8" aria-label="Generation workers" title="Generation workers (1-32). More workers than logical cores only splits the same work more finely" />
+            </div>
           </fieldset>
           <fieldset class="groupbox">
             <legend>Gameplay</legend>

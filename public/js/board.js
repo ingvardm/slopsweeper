@@ -136,6 +136,158 @@ function warnNoGuessGaveUp(reason, candidates, elapsedMs) {
   );
 }
 
+// Copies an engine candidate onto the grid and recomputes adjacencies. Shared by
+// both generation paths, so a worker's board is laid down exactly as a
+// single-threaded one is.
+function applyMines(cells) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      grid[r][c].mine = cells[r * COLS + c].mine;
+    }
+  }
+  computeAdjacents();
+}
+
+// Workers to race, and whether to race them at all. Multi-threaded generation
+// only means anything alongside no-guess boards — with no-guess off a board is a
+// single random draw and there is nothing to parallelise. The Worker check keeps
+// the single-threaded path as the fallback wherever workers are unavailable.
+function generationWorkerCount() {
+  return Math.max(1, Math.min(MAX_GENERATION_WORKERS, Math.floor(Number(boardConfig.workerCount)) || 1));
+}
+
+function useWorkerGeneration() {
+  // `!== 'undefined'` rather than `=== 'function'`: Worker is a constructor
+  // function in every engine that has it, but there is no reason to insist on
+  // that when all we need is for it to exist.
+  return boardConfig.noGuess && boardConfig.multiThreaded && typeof Worker !== 'undefined';
+}
+
+/**
+ * Races generationWorkerCount() workers, each building and verifying its own
+ * candidate, and takes the first board that passes. The moment one lands the
+ * others are terminated mid-search: their results are no longer wanted, and on a
+ * large board an abandoned search is real CPU the browser is still spending.
+ *
+ * A worker only reports success after the independent solver has confirmed the
+ * board, so the winner is used as-is. It is our own same-origin code doing that
+ * check, so the main thread does not repeat it — re-verifying here would block
+ * the main thread for exactly as long as the work was worth moving off it.
+ *
+ * Resolves true if a verified board was applied, false if the search ran out and
+ * a random board was used instead. Never rejects.
+ */
+function generateBoardInWorkers(excludeR, excludeC) {
+  const count = generationWorkerCount();
+  const startTime = Date.now();
+  const deadline = startTime + GENERATION_BUDGET_MS;
+  const request = {
+    type: 'generate',
+    cols: COLS,
+    rows: ROWS,
+    mines: MINES,
+    startR: excludeR,
+    startC: excludeC,
+    openOnStart: boardConfig.openOnStart,
+    budgetMs: GENERATION_BUDGET_MS,
+    candidateBudgetMs: GENERATION_CANDIDATE_BUDGET_MS,
+  };
+
+  return new Promise((resolve) => {
+    const workers = [];
+    let pending = 0;
+    let settled = false;
+    let candidates = 0;
+    let lastReason = 'no workers';
+    let timer = null;
+
+    // Always tears the whole field down: on a win, on exhaustion and on the
+    // timeout alike. A leaked worker would keep searching for a board nobody
+    // will use.
+    const cleanup = () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      for (const w of workers) {
+        try {
+          w.terminate();
+        } catch (e) {}
+      }
+      workers.length = 0;
+    };
+
+    const finish = (cells) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (cells) {
+        applyMines(cells);
+        resolve(true);
+        return;
+      }
+      warnNoGuessGaveUp(lastReason, candidates, Date.now() - startTime);
+      placeMinesRandom(excludeR, excludeC);
+      computeAdjacents();
+      resolve(false);
+    };
+
+    // One worker out of the field is done. Only give up once they all are: a
+    // worker that runs dry early says nothing about the others still searching.
+    const workerDone = (msg) => {
+      candidates += (msg && msg.candidates) || 0;
+      if (msg && msg.reason) lastReason = msg.reason;
+      if (--pending > 0) return;
+      finish(null);
+    };
+
+    for (let i = 0; i < count; i++) {
+      let worker;
+      try {
+        worker = new Worker('js/gen-worker.js');
+      } catch (e) {
+        // Blocked or unavailable. Whatever did start can still produce a board.
+        console.warn('generateBoardInWorkers: could not start a worker.', e);
+        continue;
+      }
+      pending++;
+      workers.push(worker);
+      worker.onmessage = (e) => {
+        const msg = e.data || {};
+        if (settled) return;
+        if (msg.type === 'board') {
+          // First verified board wins outright.
+          finish(msg.cells);
+          return;
+        }
+        workerDone(msg);
+      };
+      worker.onerror = (e) => {
+        // Never let one broken worker strand the click.
+        if (settled) return;
+        console.warn('generateBoardInWorkers: worker failed.', e.message || e);
+        workerDone({ reason: 'worker error' });
+      };
+      worker.postMessage(request);
+    }
+
+    if (pending === 0) {
+      // No worker could be created at all — hand back to the caller so the
+      // single-threaded path can still try.
+      finish(null);
+      return;
+    }
+
+    // Backstop for workers that neither answer nor fail, e.g. a tab that was
+    // throttled mid-search.
+    timer = setTimeout(() => {
+      if (settled) return;
+      lastReason = 'budget';
+      finish(null);
+    }, Math.max(0, deadline - Date.now()));
+  });
+}
+
 /*
  * Board Generator.
  *
@@ -152,6 +304,11 @@ function warnNoGuessGaveUp(reason, candidates, elapsedMs) {
  *   actually guess-free. Roughly half of its candidates pass the independent
  *   check, so a few attempts are normal.
  *
+ * When the "Multi-threaded generation" setting is on, that propose-and-verify
+ * work runs in web workers racing each other and the first verified board wins
+ * (see generateBoardInWorkers and gen-worker.js). Otherwise it runs inline, one
+ * candidate at a time, yielding between attempts.
+ *
  * With no-guess mode off a single random draw is taken, so games start instantly.
  *
  * A valid board is always left on the grid. If no candidate can be verified
@@ -161,6 +318,7 @@ function warnNoGuessGaveUp(reason, candidates, elapsedMs) {
  */
 async function generateBoardSafe(excludeR, excludeC) {
   if (boardConfig.noGuess) {
+    if (useWorkerGeneration()) return generateBoardInWorkers(excludeR, excludeC);
     const deadline = Date.now() + GENERATION_BUDGET_MS;
     const startTime = deadline - GENERATION_BUDGET_MS;
     let candidates = 0;
@@ -193,13 +351,7 @@ async function generateBoardSafe(excludeR, excludeC) {
       }
       candidates++;
 
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          grid[r][c].mine = res.cells[r * COLS + c].mine;
-        }
-      }
-      computeAdjacents();
-
+      applyMines(res.cells);
       if (isSolvable(grid, excludeR, excludeC)) return true;
     }
 

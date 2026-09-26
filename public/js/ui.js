@@ -417,6 +417,18 @@ function applyBoardDisabled() {
   $group.style.opacity = multiplayer ? '0.45' : '';
   if (multiplayer) $group.title = 'Locked during a multiplayer game';
   else $group.removeAttribute('title');
+
+  // The worker count means nothing while the workers are off, so it is dimmed
+  // and disabled rather than hidden: the setting stays discoverable and its
+  // value is kept. This lives here, after the loop above, because that loop
+  // resets `disabled` on every control in the groupbox.
+  const $workerRow = document.querySelector('.worker-only');
+  if ($workerRow) {
+    const usable = !multiplayer && boardConfig.multiThreaded;
+    $workerRow.style.opacity = usable ? '' : '0.45';
+    const ctrl = $workerRow.querySelector('input');
+    if (ctrl) ctrl.disabled = !usable;
+  }
 }
 
 // Fills the difficulty dropdown from DIFFICULTIES, in preset order, then adds
@@ -447,12 +459,16 @@ function refreshBoardForm() {
   const $mines = document.getElementById('board-mines');
   const $noGuess = document.getElementById('board-no-guess');
   const $openOnStart = document.getElementById('board-open-on-start');
+  const $multiThreaded = document.getElementById('board-multi-threaded');
+  const $workerCount = document.getElementById('board-worker-count');
   if ($difficulty) $difficulty.value = cfg.difficulty;
   if ($cols) $cols.value = cfg.customCols;
   if ($rows) $rows.value = cfg.customRows;
   if ($mines) $mines.value = cfg.customMines;
   if ($noGuess) $noGuess.checked = cfg.noGuess;
   if ($openOnStart) $openOnStart.checked = cfg.openOnStart;
+  if ($multiThreaded) $multiThreaded.checked = cfg.multiThreaded;
+  if ($workerCount) $workerCount.value = cfg.workerCount;
   applyBoardDisabled();
 }
 
@@ -481,6 +497,8 @@ function commitCustomSize() {
 const $boardDifficulty = document.getElementById('board-difficulty');
 const $boardNoGuess = document.getElementById('board-no-guess');
 const $boardOpenOnStart = document.getElementById('board-open-on-start');
+const $boardMultiThreaded = document.getElementById('board-multi-threaded');
+const $boardWorkerCount = document.getElementById('board-worker-count');
 populateDifficultyOptions();
 if ($boardDifficulty) {
   $boardDifficulty.addEventListener('change', (e) => commitBoardConfig({ difficulty: e.target.value }));
@@ -488,6 +506,16 @@ if ($boardDifficulty) {
 if ($boardNoGuess) $boardNoGuess.addEventListener('change', (e) => commitBoardConfig({ noGuess: e.target.checked }));
 if ($boardOpenOnStart) {
   $boardOpenOnStart.addEventListener('change', (e) => commitBoardConfig({ openOnStart: e.target.checked }));
+}
+if ($boardMultiThreaded) {
+  $boardMultiThreaded.addEventListener('change', (e) => commitBoardConfig({ multiThreaded: e.target.checked }));
+}
+if ($boardWorkerCount) {
+  $boardWorkerCount.addEventListener('change', () =>
+    // commitBoardConfig writes the clamped value back through refreshBoardForm,
+    // so an out-of-range or blank entry settles on what was really applied.
+    commitBoardConfig({ workerCount: $boardWorkerCount.value })
+  );
 }
 ['board-cols', 'board-rows', 'board-mines'].forEach(id => {
   const $el = document.getElementById(id);

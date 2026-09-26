@@ -48,6 +48,14 @@ const MAX_ROWS = 250;
 const GENERATION_BUDGET_MS = 5000;
 const GENERATION_CANDIDATE_BUDGET_MS = 1500;
 
+// Ceiling on generation workers asked for by the "Multi-threaded generation"
+// setting. The number the player enters is honoured as given, but a typo like
+// 800 should not try to spawn 800 threads. Declared here rather than in board.js
+// because the board-config sanitizer reads it, and that runs during this file's
+// own load (see boardConfig below) — a later declaration would be in its
+// temporal dead zone and throw.
+const MAX_GENERATION_WORKERS = 32;
+
 const DEFAULT_BOARD_CONFIG = {
   difficulty: 'expert',
   customCols: 30,
@@ -55,6 +63,12 @@ const DEFAULT_BOARD_CONFIG = {
   customMines: 99,
   noGuess: true,
   openOnStart: true,
+  // Off by default: single-threaded generation is the established, measured
+  // path, and the presets finish in milliseconds without needing workers. The
+  // workers pay off on large custom boards, where one candidate can take
+  // seconds and several in parallel make the wait markedly shorter.
+  multiThreaded: false,
+  workerCount: 8,
 };
 
 // Live board dimensions. Declared with `let` rather than `const` because the
@@ -106,6 +120,17 @@ function sanitizeBoardSize(cols, rows, mines, openOnStart) {
   return { cols: c, rows: r, mines: m };
 }
 
+// Generation workers to ask for, as an integer in 1..MAX_GENERATION_WORKERS. A
+// blank or non-numeric box falls back to the default rather than to 1, so
+// clearing the field does not quietly mean "one at a time".
+function sanitizeWorkerCount(count) {
+  const def = DEFAULT_BOARD_CONFIG.workerCount;
+  if (count === '' || count === null || count === undefined) return def;
+  const n = Math.floor(Number(count));
+  if (!Number.isFinite(n)) return def;
+  return Math.max(1, Math.min(MAX_GENERATION_WORKERS, n));
+}
+
 function sanitizeBoardConfig(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
   const def = DEFAULT_BOARD_CONFIG;
@@ -124,6 +149,9 @@ function sanitizeBoardConfig(raw) {
     customMines: size.mines,
     noGuess: typeof src.noGuess === 'boolean' ? src.noGuess : def.noGuess,
     openOnStart,
+    multiThreaded:
+      typeof src.multiThreaded === 'boolean' ? src.multiThreaded : def.multiThreaded,
+    workerCount: sanitizeWorkerCount(src.workerCount),
   };
 }
 
